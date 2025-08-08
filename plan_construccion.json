@@ -2,7 +2,7 @@
   "api_contract": {
     "ruta": "/api/calculate",
     "metodo": "POST",
-    "descripcion": "Evalúa una expresión matemática recibida como string y devuelve el resultado.",
+    "descripcion": "Endpoint que recibe una expresión matemática como string y devuelve su resultado.",
     "parametros_entrada": {
       "expression": "string"
     },
@@ -14,30 +14,27 @@
     {
       "etapa": "backend",
       "tareas": [
-        "Inicializar un proyecto Flask con la estructura de carpetas estándar (app, static, templates).",
-        "Crear el archivo principal app.py que importe Flask y configure la aplicación.",
-        "Definir el endpoint POST '/api/calculate' dentro de app.py.",
-        "Implementar una función para evaluar la expresión recibida usando eval() con un diccionario restringido a operadores aritméticos seguros.",
-        "Añadir validación de entrada: comprobar que 'expression' es string no vacío y contiene solo dígitos, puntos decimales y los caracteres '+', '-', '*', '/'.",
-        "Gestionar excepciones para errores de sintaxis o división por cero, devolviendo un código 400 con mensaje JSON.",
-        "Construir la respuesta JSON con la clave 'result' que contenga el valor numérico calculado.",
-        "Configurar CORS si es necesario para permitir llamadas desde el frontend local.",
-        "Escribir pruebas unitarias simples para asegurar que el endpoint devuelve resultados correctos y maneja errores apropiadamente."
+        "Crear la estructura de directorios básica para un proyecto Flask (app.py, requirements.txt).",
+        "Instalar y configurar Flask en el entorno virtual.",
+        "Definir el endpoint POST '/api/calculate' que acepte JSON con la clave 'expression'.",
+        "Implementar una función segura para evaluar la expresión matemática sin usar eval directamente.",
+        "Añadir validación de entrada para asegurar que la expresión contiene solo dígitos, operadores y puntos decimales.",
+        "Gestionar excepciones y devolver errores 400 en caso de expresiones inválidas.",
+        "Retornar el resultado de la evaluación como JSON con clave 'result'.",
+        "Configurar CORS para permitir solicitudes desde el dominio del frontend si es necesario."
       ]
     },
     {
       "etapa": "frontend",
       "tareas": [
-        "Crear un archivo único index.html con la estructura básica de DOCTYPE, head y body.",
-        "Diseñar la pantalla del visor usando un elemento div o input readonly que muestre el contenido actual de la expresión y el resultado.",
-        "Implementar una cuadrícula CSS (Flexbox) para colocar los botones numéricos 0‑9, operadores +, -, *, /, punto decimal, borrar C y igual =.",
-        "Añadir atributos data-valor a cada botón para identificar su función en JavaScript.",
-        "Escribir un script inline que mantenga una variable string 'currentExpression' actualizada con los clics de botones.",
-        "Al pulsar '=', enviar una solicitud POST al endpoint '/api/calculate' usando fetch, enviando JSON { expression: currentExpression }. ",
-        "Procesar la respuesta JSON y actualizar el visor con el valor bajo la clave 'result'.",
-        "Implementar manejo básico de errores: si la API devuelve un error, mostrar un mensaje breve en el visor.",
-        "Añadir funcionalidad del botón C para borrar completamente la expresión actual.",
-        "Garantizar que los estilos CSS hagan que la calculadora sea responsiva y visualmente similar a una calculadora estándar."
+        "Crear un archivo 'index.html' con una estructura básica HTML5.",
+        "Diseñar la pantalla de la calculadora usando CSS Grid o Flexbox, incluyendo un área de visualización para input y resultado.",
+        "Añadir botones numéricos 0‑9, operadores +, -, *, /, punto decimal, igual (=) y borrar (C).",
+        "Implementar lógica JavaScript inline para construir la expresión matemática al hacer clic en los botones.",
+        "Al pulsar '=', capturar la expresión mostrada y enviar una solicitud POST a '/api/calculate' con JSON {expression: <string>}.",
+        "Procesar la respuesta del backend y actualizar el área de visualización con el valor 'result'.",
+        "Incluir manejo básico de errores para mostrar un mensaje en caso de fallo de la API.",
+        "Garantizar que el HTML sea autocontenido sin dependencias externas."
       ]
     }
   ]

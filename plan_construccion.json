@@ -1,0 +1,44 @@
+{
+  "api_contract": {
+    "ruta": "/api/calculate",
+    "metodo": "POST",
+    "descripcion": "Evalúa una expresión matemática recibida como string y devuelve el resultado.",
+    "parametros_entrada": {
+      "expression": "string"
+    },
+    "respuesta_esperada": {
+      "result": "number"
+    }
+  },
+  "plan": [
+    {
+      "etapa": "backend",
+      "tareas": [
+        "Inicializar un proyecto Flask con la estructura de carpetas estándar (app, static, templates).",
+        "Crear el archivo principal app.py que importe Flask y configure la aplicación.",
+        "Definir el endpoint POST '/api/calculate' dentro de app.py.",
+        "Implementar una función para evaluar la expresión recibida usando eval() con un diccionario restringido a operadores aritméticos seguros.",
+        "Añadir validación de entrada: comprobar que 'expression' es string no vacío y contiene solo dígitos, puntos decimales y los caracteres '+', '-', '*', '/'.",
+        "Gestionar excepciones para errores de sintaxis o división por cero, devolviendo un código 400 con mensaje JSON.",
+        "Construir la respuesta JSON con la clave 'result' que contenga el valor numérico calculado.",
+        "Configurar CORS si es necesario para permitir llamadas desde el frontend local.",
+        "Escribir pruebas unitarias simples para asegurar que el endpoint devuelve resultados correctos y maneja errores apropiadamente."
+      ]
+    },
+    {
+      "etapa": "frontend",
+      "tareas": [
+        "Crear un archivo único index.html con la estructura básica de DOCTYPE, head y body.",
+        "Diseñar la pantalla del visor usando un elemento div o input readonly que muestre el contenido actual de la expresión y el resultado.",
+        "Implementar una cuadrícula CSS (Flexbox) para colocar los botones numéricos 0‑9, operadores +, -, *, /, punto decimal, borrar C y igual =.",
+        "Añadir atributos data-valor a cada botón para identificar su función en JavaScript.",
+        "Escribir un script inline que mantenga una variable string 'currentExpression' actualizada con los clics de botones.",
+        "Al pulsar '=', enviar una solicitud POST al endpoint '/api/calculate' usando fetch, enviando JSON { expression: currentExpression }. ",
+        "Procesar la respuesta JSON y actualizar el visor con el valor bajo la clave 'result'.",
+        "Implementar manejo básico de errores: si la API devuelve un error, mostrar un mensaje breve en el visor.",
+        "Añadir funcionalidad del botón C para borrar completamente la expresión actual.",
+        "Garantizar que los estilos CSS hagan que la calculadora sea responsiva y visualmente similar a una calculadora estándar."
+      ]
+    }
+  ]
+}

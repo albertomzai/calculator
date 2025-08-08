@@ -2,7 +2,7 @@
   "api_contract": {
     "ruta": "/api/calculate",
     "metodo": "POST",
-    "descripcion": "Endpoint que recibe una expresión matemática como string y devuelve su resultado.",
+    "descripcion": "Endpoint para evaluar expresiones matemáticas recibidas como cadena.",
     "parametros_entrada": {
       "expression": "string"
     },
@@ -14,27 +14,32 @@
     {
       "etapa": "backend",
       "tareas": [
-        "Crear la estructura de directorios básica para un proyecto Flask (app.py, requirements.txt).",
-        "Instalar y configurar Flask en el entorno virtual.",
-        "Definir el endpoint POST '/api/calculate' que acepte JSON con la clave 'expression'.",
-        "Implementar una función segura para evaluar la expresión matemática sin usar eval directamente.",
-        "Añadir validación de entrada para asegurar que la expresión contiene solo dígitos, operadores y puntos decimales.",
-        "Gestionar excepciones y devolver errores 400 en caso de expresiones inválidas.",
-        "Retornar el resultado de la evaluación como JSON con clave 'result'.",
-        "Configurar CORS para permitir solicitudes desde el dominio del frontend si es necesario."
+        "Crear la estructura de directorios básica del proyecto Flask (app, static, templates).",
+        "Inicializar un virtualenv y crear un archivo requirements.txt con Flask.",
+        "Implementar el módulo app/__init__.py que crea el objeto Flask y configura CORS si es necesario.",
+        "Definir en app/routes.py la ruta POST '/api/calculate' que recibe JSON con clave 'expression'.",
+        "Validar que el cuerpo sea JSON válido y que 'expression' exista y sea string.",
+        "Implementar una función de evaluación segura (por ejemplo, usando ast.parse) para calcular el resultado.",
+        "Capturar excepciones de sintaxis o división por cero y devolver un error 400 con mensaje descriptivo.",
+        "Devolver la respuesta en formato JSON: {\"result\": valor_numerico}.",
+        "Configurar el script run.py que ejecuta app.run(host='0.0.0.0', port=5000).",
+        "Agregar pruebas unitarias básicas para el endpoint usando pytest y Flask test client."
       ]
     },
     {
       "etapa": "frontend",
       "tareas": [
-        "Crear un archivo 'index.html' con una estructura básica HTML5.",
-        "Diseñar la pantalla de la calculadora usando CSS Grid o Flexbox, incluyendo un área de visualización para input y resultado.",
-        "Añadir botones numéricos 0‑9, operadores +, -, *, /, punto decimal, igual (=) y borrar (C).",
-        "Implementar lógica JavaScript inline para construir la expresión matemática al hacer clic en los botones.",
-        "Al pulsar '=', capturar la expresión mostrada y enviar una solicitud POST a '/api/calculate' con JSON {expression: <string>}.",
-        "Procesar la respuesta del backend y actualizar el área de visualización con el valor 'result'.",
-        "Incluir manejo básico de errores para mostrar un mensaje en caso de fallo de la API.",
-        "Garantizar que el HTML sea autocontenido sin dependencias externas."
+        "Crear un archivo 'index.html' con la estructura básica HTML5.",
+        "Incluir un div que actúe como pantalla de la calculadora, con id 'display'.",
+        "Definir una tabla o grid de botones para 0-9, +, -, *, /, ., C y =, cada uno con clases e ids identificables.",
+        "Agregar estilos CSS en línea dentro del <style> para lograr un aspecto clásico (fondo gris, pantalla blanca).",
+        "Escribir JavaScript ES6 inline que:",
+        "  - Escuche eventos click en los botones numéricos y operadores y actualice el contenido de 'display' concatenando la cadena.",
+        "  - El botón C borre todo el contenido del display.",
+        "  - El botón = envíe una petición fetch POST a '/api/calculate' con cuerpo JSON {\"expression\": currentExpression}.",
+        "  - Maneje la respuesta, mostrando en 'display' el valor de 'result' o un mensaje de error si el status no es 200.",
+        "  - Añada manejo básico de errores de red y validación del formato de expresión antes de enviar (por ejemplo, evitar expresiones vacías).",
+        "Incluir comentarios claros sobre la función de cada bloque de código para facilitar mantenimiento."
       ]
     }
   ]

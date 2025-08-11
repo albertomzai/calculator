@@ -1,84 +1,52 @@
-# app/routes.py
-"""Define las rutas de la API."""
-
-from flask import Blueprint, request, jsonify, abort
 import ast
-import operator as op
+from flask import request, jsonify, current_app as app
 
-bp = Blueprint("api", __name__)
+# Función auxiliar para evaluar expresiones aritméticas de forma segura
 
-# Mapa seguro de operadores permitidos.
-OPERATORS = {
-    ast.Add: op.add,
-    ast.Sub: op.sub,
-    ast.Mult: op.mul,
-    ast.Div: op.truediv,
-    ast.Pow: op.pow,
-    ast.USub: op.neg,
-}
-
-
-def _eval(node):
-    """Evalúa de forma segura un árbol AST que representa una expresión aritmética.
-
-    Parameters
-    ----------
-    node : ast.AST
-        Nodo del árbol a evaluar.
-
-    Returns
-    -------
-    float | int
+def _safe_eval(expr: str):
+    """Evalúa una expresión matemática básica (solo +, -, *, /) sin usar eval.
+    Args:
+        expr: Cadena con la expresión a evaluar.
+    Returns:
         Resultado numérico de la evaluación.
+    Raises:
+        ValueError: Si la expresión contiene caracteres no permitidos o errores sintácticos.
     """
-    if isinstance(node, ast.Num):  # Python <3.8
-        return node.n
-    elif isinstance(node, ast.Constant):  # Python >=3.8
-        if isinstance(node.value, (int, float)):
-            return node.value
-        raise ValueError("Solo se permiten números")
-    elif isinstance(node, ast.BinOp) and type(node.op) in OPERATORS:
-        left = _eval(node.left)
-        right = _eval(node.right)
-        try:
-            result = OPERATORS[type(node.op)](left, right)
-        except ZeroDivisionError as e:
-            raise ZeroDivisionError("División por cero") from e
-        return result
-    elif isinstance(node, ast.UnaryOp) and type(node.op) in OPERATORS:
-        operand = _eval(node.operand)
-        return OPERATORS[type(node.op)](operand)
-    else:
-        raise ValueError(f"Operador no permitido: {ast.dump(node)}")
-
-
-@bp.route("/calculate", methods=["POST"])
-def calculate():
-    """Evalúa una expresión matemática enviada en el cuerpo JSON.
-
-    El cuerpo debe ser un objeto JSON con la clave ``expression`` que contenga una cadena.
-    Si la evaluación es exitosa, devuelve ``{"result": valor}``.
-    En caso de error (JSON inválido, falta la clave, sintaxis incorrecta o división por cero)
-    responde con status 400 y un mensaje descriptivo.
-    """
-    if not request.is_json:
-        abort(400, description="El cuerpo debe ser JSON")
-
-    data = request.get_json(silent=True)
-    if not isinstance(data, dict) or "expression" not in data:
-        abort(400, description="Se requiere la clave 'expression' con una cadena válida")
-
-    expression = data["expression"]
-    if not isinstance(expression, str):
-        abort(400, description="La expresión debe ser una cadena")
-
+    # Parsear el árbol AST
     try:
-        tree = ast.parse(expression, mode="eval")
-        result = _eval(tree.body)
-    except ZeroDivisionError as e:
-        abort(400, description=str(e))
-    except Exception as e:
-        # Cualquier otro error (sintaxis, operadores no permitidos, etc.)
-        abort(400, description=f"Expresión inválida: {e}")
+        node = ast.parse(expr, mode='eval')
+    except SyntaxError as e:
+        raise ValueError(f'Syntax error in expression: {e}')
 
-    return jsonify({"result": result})
+    # Recorrer nodos permitidos
+    allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num,
+                     ast.Constant, ast.Add, ast.Sub, ast.Mult, ast.Div,
+                     ast.Pow, ast.Mod, ast.USub, ast.UAdd)
+
+    for n in ast.walk(node):
+        if not isinstance(n, allowed_nodes):
+            raise ValueError(f'Unsupported expression: {expr}')
+
+    # Evaluar usando eval con un entorno restringido
+    try:
+        result = eval(compile(node, '<string>', mode='eval'), {'__builtins__': None}, {})
+    except Exception as e:
+        raise ValueError(f'Evaluation error: {e}')
+
+    return result
+
+# Definir la ruta POST /api/calculate
+@app.route('/api/calculate', methods=['POST'])
+def calculate():
+    data = request.get_json(silent=True)
+    if not data or 'expression' not in data:
+        return jsonify({'error': "Missing 'expression' field"}), 400
+    expression = data['expression']
+    if not isinstance(expression, str) or not expression.strip():
+        return jsonify({'error': 'Expression must be a non-empty string'}), 400
+    try:
+        result = _safe_eval(expression)
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    # Devolver resultado en JSON
+    return jsonify({'result': result})

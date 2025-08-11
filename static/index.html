@@ -1,42 +1,38 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Calculadora API</title>
-  <style>
-    body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin:0; }
-    .calculator { width: 260px; border: 1px solid #ccc; padding:10px; border-radius:5px; background:#f9f9f9; }
-    .display { width: 100%; height:40px; text-align:right; font-size:1.2em; margin-bottom:10px; padding:5px; border:1px solid #ddd; border-radius:3px; }
-    .buttons { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; }
-    button { padding:15px; font-size:1em; }
-  </style>
+<meta charset="UTF-8">
+<title>Calculadora</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;background:#f0f0f0;margin:0;padding:20px;display:flex;justify-content:center;align-items:center;height:100vh}
+  .calc{background:white;border-radius:10px;padding:20px;box-shadow:0 4px 8px rgba(0,0,0,.1)}
+  .screen{width:260px;height:40px;background:#222;color:white;font-size:24px;text-align:right;padding:5px;margin-bottom:10px;border-radius:5px}
+  .keys{display:grid;grid-template-columns:repeat(4,60px);gap:10px}
+  button{padding:15px;font-size:18px;background:#eee;border:none;border-radius:5px;cursor:pointer}
+  button.operator{background:#ffd700}
+  button.equal{background:#00bfff;color:white;width:100%;grid-column:span 4}
+</style>
+<script>
+function sendExpression(){
+  const expr=document.getElementById('screen').innerText;
+  fetch('/api/calculate',{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({expression:expr})
+  }).then(r=>r.json()).then(d=>{document.getElementById('screen').innerText=d.result||d.error;});
+}
+function addChar(c){document.getElementById('screen').innerText+=c;}
+function clearScreen(){document.getElementById('screen').innerText='';}
+</script>
 </head>
 <body>
-<div class="calculator">
-  <input type="text" id="display" class="display" readonly />
-  <div class="buttons">
-    <button data-value="7">7</button><button data-value="8">8</button><button data-value="9">9</button><button data-value="/">/</button>
-    <button data-value="4">4</button><button data-value="5">5</button><button data-value="6">6</button><button data-value="*">*</button>
-    <button data-value="1">1</button><button data-value="2">2</button><button data-value="3">3</button><button data-value="-">-</button>
-    <button data-value="0">0</button><button data-value=".">.</button><button id="equals">=</button><button data-value="+">+</button>
-    <button id="clear" style="grid-column:span 4; background:#e74c3c; color:white;">C</button>
+<div class="calc">
+  <div id="screen" class="screen"></div>
+  <div class="keys">
+    <button onclick="addChar('7')">7</button><button onclick="addChar('8')">8</button><button onclick="addChar('9')">9</button><button class="operator" onclick="addChar('/')">/</button>
+    <button onclick="addChar('4')">4</button><button onclick="addChar('5')">5</button><button onclick="addChar('6')">6</button><button class="operator" onclick="addChar('*')">*</button>
+    <button onclick="addChar('1')">1</button><button onclick="addChar('2')">2</button><button onclick="addChar('3')">3</button><button class="operator" onclick="addChar('-')">-</button>
+    <button onclick="addChar('0')">0</button><button onclick="addChar('.')">.</button><button class="equal" onclick="sendExpression()">=</button><button class="operator" onclick="addChar('+')">+</button>
+    <button style="grid-column:span 4; background:#ff6347;color:white" onclick="clearScreen()">C</button>
   </div>
 </div>
-<script>
-const display = document.getElementById('display');
-document.querySelectorAll('.buttons button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const val=btn.dataset.value;
-    if(val){display.value+=val;}
-    else if(btn.id==='equals'){
-      fetch('/api/calculate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({expression:display.value})})
-        .then(r=>r.json()).then(d=>{if(d.result!==undefined)display.value=d.result;else display.value='Error';});
-    }
-    else if(btn.id==='clear'){
-      display.value='';
-    }
-  });
-});
-</script>
 </body>
 </html>

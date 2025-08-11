@@ -2,35 +2,40 @@
   "api_contract": {
     "ruta": "/api/calculate",
     "metodo": "POST",
-    "descripcion": "Endpoint para realizar un cálculo específico de dos números.",
+    "descripcion": "Endpoint que recibe una expresión matemática como string y devuelve su resultado.",
     "parametros_entrada": {
-      "numero1": "float",
-      "numero2": "float"
+      "expression": "string"
     },
     "respuesta_esperada": {
-      "resultado": "float"
+      "result": "number"
     }
   },
   "plan": [
     {
       "etapa": "backend",
       "tareas": [
-        "Inicializar un proyecto Flask con una estructura de directorios básica para el backend.",
-        "Definir el endpoint POST '/api/calculate' para recibir los números.",
-        "Implementar la lógica de cálculo (ej. suma, resta, multiplicación) en la función asociada al endpoint.",
-        "Asegurar la validación de los datos de entrada para evitar errores y manejar excepciones.",
-        "Devolver la respuesta del cálculo en formato JSON."
+        "Crear la estructura de directorios básica para un proyecto Flask: carpeta 'app', archivo '__init__.py' y 'routes.py'.",
+        "Inicializar el objeto Flask en '__init__.py' con configuración mínima (SECRET_KEY opcional).",
+        "Definir el endpoint POST '/api/calculate' en 'routes.py', aceptando JSON con la clave 'expression'.",
+        "Implementar una función de evaluación segura que utilice 'ast.parse' para parsear y evaluar la expresión, permitiendo solo operadores aritméticos básicos.",
+        "Validar que la entrada sea un string no vacío y manejar excepciones devolviendo códigos HTTP 400 cuando corresponda.",
+        "Devolver el resultado en formato JSON con la clave 'result', usando jsonify y estableciendo Content-Type apropiado.",
+        "Añadir pruebas unitarias básicas para el endpoint, verificando casos de éxito y error (por ejemplo, expresión inválida).",
+        "Configurar el servidor para que se ejecute con 'flask run' o mediante un script 'run.py'."
       ]
     },
     {
       "etapa": "frontend",
       "tareas": [
-        "Crear el archivo 'index.html' con la estructura básica: título, formulario de entrada para dos números y un botón.",
-        "Añadir un elemento HTML para mostrar el resultado del cálculo.",
-        "Implementar el código JavaScript directamente en 'index.html' para capturar los valores del formulario.",
-        "Realizar una solicitud AJAX (fetch) al endpoint '/api/calculate' del backend con los datos de los números.",
-        "Actualizar dinámicamente el área de resultados en 'index.html' con la respuesta recibida del backend.",
-        "Incluir manejo básico de errores en el frontend para mostrar mensajes al usuario si la API falla."
+        "Crear el archivo 'index.html' en la raíz del proyecto.",
+        "Definir la estructura HTML: una pantalla de entrada/resultado y un contenedor para los botones de la calculadora.",
+        "Estilizar la interfaz usando CSS Grid o Flexbox para lograr una apariencia clásica de calculadora, con estilos mínimos inline dentro de <style>.",
+        "Añadir botones numéricos (0‑9), operadores (+, -, *, /), punto decimal, igual (=) y borrar (C).",
+        "Implementar un script JavaScript interno que maneje los clics en cada botón, construyendo la expresión matemática en una variable y actualizando el contenido de la pantalla.",
+        "Al pulsar '=', enviar la expresión a la API '/api/calculate' mediante fetch POST con encabezado 'Content-Type: application/json'.",
+        "Procesar la respuesta JSON y mostrar el valor de 'result' en la pantalla, reemplazando la expresión anterior.",
+        "Incluir manejo básico de errores: si la API devuelve error, mostrar un mensaje de alerta o texto de error en la pantalla.",
+        "Garantizar que la aplicación sea autocontenida y no dependa de recursos externos (ej. CDN)."
       ]
     }
   ]

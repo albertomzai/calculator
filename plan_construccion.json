@@ -1,0 +1,43 @@
+{
+  "api_contract": {
+    "ruta": "/api/calculate",
+    "metodo": "POST",
+    "descripcion": "Endpoint para evaluar una expresión matemática segura.",
+    "parametros_entrada": {
+      "expression": "string"
+    },
+    "respuesta_esperada": {
+      "result": "number"
+    }
+  },
+  "plan": [
+    {
+      "etapa": "backend",
+      "tareas": [
+        "Inicializar un proyecto Flask con la estructura de directorios básica.",
+        "Crear el archivo app.py que importe Flask y defina la aplicación.",
+        "Definir el endpoint POST '/api/calculate' para recibir la expresión matemática en formato JSON.",
+        "Implementar una función segura de evaluación (por ejemplo, usando ast.parse) para procesar la expresión sin ejecutar código arbitrario.",
+        "Validar que la entrada sea un string no vacío y que la evaluación no genere excepciones.",
+        "Devolver el resultado como JSON con la clave 'result' y tipo número.",
+        "Agregar manejo de errores HTTP 400 para entradas inválidas y 500 para fallos internos.",
+        "Configurar CORS si es necesario para permitir llamadas desde el frontend.",
+        "Escribir pruebas unitarias simples que verifiquen la correcta evaluación de expresiones básicas."
+      ]
+    },
+    {
+      "etapa": "frontend",
+      "tareas": [
+        "Crear un archivo index.html con estructura básica: <html>, <head> y <body>.",
+        "Diseñar la pantalla de la calculadora usando CSS Grid o Flexbox para posicionar el visor y los botones.",
+        "Agregar elementos HTML para mostrar la expresión actual y el resultado final.",
+        "Incluir botones numerales 0-9, operadores +, -, *, /, punto decimal, igual (=) y borrar (C).",
+        "Añadir scripts JavaScript inline que mantengan una variable de estado con la expresión actual.",
+        "Asignar manejadores de eventos a cada botón para actualizar la pantalla según el clic.",
+        "Implementar la función que envíe la expresión actual al endpoint '/api/calculate' usando fetch POST.",
+        "Recibir la respuesta JSON y mostrar el valor de 'result' en la pantalla.",
+        "Incorporar manejo básico de errores del fetch, mostrando mensajes amigables si la API falla."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "api_contract": {
+    "ruta": "/api/calculate",
+    "metodo": "POST",
+    "descripcion": "Endpoint para evaluar una expresión matemática recibida como string.",
+    "parametros_entrada": {
+      "expression": "string"
+    },
+    "respuesta_esperada": {
+      "result": "number (p.ej., 37, 5.6)"
+    }
+  },
+  "plan": [
+    {
+      "etapa": "backend",
+      "tareas": [
+        "Crear la estructura de directorios para el proyecto Flask con un archivo 'app.py' y un virtualenv.",
+        "Instalar las dependencias necesarias: flask, python-dotenv (si se requiere configuración).",
+        "Definir en 'app.py' la aplicación Flask y configurar CORS si es necesario para llamadas desde el frontend local.",
+        "Implementar el endpoint POST '/api/calculate' que recibe un JSON con la clave 'expression'.",
+        "Validar que la expresión sea una cadena no vacía y contenga únicamente caracteres numéricos, operadores (+,-,*,/) y puntos decimales.",
+        "Evaluar la expresión de forma segura utilizando un parser mínimo (por ejemplo, ast.parse con comprobación de nodos permitidos) para evitar ejecución arbitraria.",
+        "Devolver el resultado en formato JSON: {\"result\": <valor>}.",
+        "Agregar manejo de excepciones para errores de sintaxis y devolver códigos HTTP 400 con mensaje descriptivo.",
+        "Escribir pruebas unitarias simples que verifiquen la correcta evaluación de expresiones básicas y la respuesta del endpoint."
+      ]
+    },
+    {
+      "etapa": "frontend",
+      "tareas": [
+        "Crear el archivo 'index.html' en la raíz del proyecto con la estructura básica: DOCTYPE, head con título y estilo inline.",
+        "Diseñar una pantalla de calculadora usando CSS Grid o Flexbox para posicionar los botones numéricos, operadores, igual, borrar y punto decimal.",
+        "Añadir un elemento de salida (div) que muestre tanto el input actual como el resultado final.",
+        "Implementar JavaScript inline dentro del HTML para manejar eventos click en cada botón y construir la expresión matemática en una variable.",
+        "Agregar lógica para actualizar el display con cada entrada y limpiar al pulsar 'C'.",
+        "Cuando se pulsa '=', capturar la expresión completa, enviarla vía fetch POST a '/api/calculate' con header 'Content-Type: application/json'.",
+        "Procesar la respuesta JSON del backend y mostrar el valor de 'result' en el display.",
+        "Incluir manejo básico de errores (por ejemplo, alertar al usuario si la API devuelve un error o la expresión es inválida)."
+      ]
+    }
+  ]
+}

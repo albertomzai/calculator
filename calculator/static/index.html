@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculator</title>
+  <style>
+    body { font-family: Arial, sans-serif; display:flex; justify-content:center; align-items:center; height:100vh; background:#f0f0f0; }
+    .calculator { width:260px; padding:20px; background:white; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,.1); display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    .display { grid-column: span 4; height:40px; background:#222; color:white; text-align:right; padding:5px; font-size:1.2em; border-radius:5px; }
+    button { height:50px; font-size:1.2em; border:none; background:#e0e0e0; border-radius:5px; cursor:pointer; }
+    button.operator { background:#ff9500; color:white; }
+    button.equal { background:#34c759; color:white; grid-column: span 4; }
+    button.clear { background:#ff3b30; color:white; }
+  </style>
+</head>
+<body>
+<div class="calculator">
+  <div id="display" class="display">0</div>
+  <!-- Buttons -->
+  <button onclick="appendValue('7')">7</button>
+  <button onclick="appendValue('8')">8</button>
+  <button onclick="appendValue('9')">9</button>
+  <button class="operator" onclick="appendValue('/')">/</button>
+
+  <button onclick="appendValue('4')">4</button>
+  <button onclick="appendValue('5')">5</button>
+  <button onclick="appendValue('6')">6</button>
+  <button class="operator" onclick="appendValue('*')">*</button>
+
+  <button onclick="appendValue('1')">1</button>
+  <button onclick="appendValue('2')">2</button>
+  <button onclick="appendValue('3')">3</button>
+  <button class="operator" onclick="appendValue('-')">-</button>
+
+  <button onclick="appendValue('0')">0</button>
+  <button onclick="appendValue('.')">.</button>
+  <button class="clear" onclick="clearDisplay()">C</button>
+  <button class="operator" onclick="appendValue('+')">+</button>
+
+  <button class="equal" onclick="calculateResult()">=</button>
+</div>
+<script>
+let current = '';
+function appendValue(val){
+  if(current === '0' && val !== '.') current = '';
+  current += val;
+  document.getElementById('display').textContent = current;
+}
+function clearDisplay(){
+  current = '';
+  document.getElementById('display').textContent = '0';
+}
+async function calculateResult(){
+  if(!current) return;
+  const res = await fetch('/api/calculate', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({expression: current})
+  });
+  const data = await res.json();
+  if(res.ok){
+    document.getElementById('display').textContent = data.result;
+    current = String(data.result);
+  } else {
+    document.getElementById('display').textContent = 'Error';
+    current = '';
+  }
+}
+</script>
+</body>
+</html>

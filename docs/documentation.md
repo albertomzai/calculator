@@ -1,65 +1,64 @@
-We need to produce markdown. Let's craft sections accordingly.# Visión General del Proyecto
+We need to produce markdown with sections. Use style guidelines. Provide tables and mermaid diagrams for architecture and endpoints. Provide installation steps. Provide data flow. Extensions future optional.
 
-Este proyecto implementa una **calculadora web** sencilla que permite evaluar expresiones matemáticas básicas a través de un backend Flask y un frontend estático en HTML/JavaScript. El flujo típico es el siguiente:
+Let's craft.# Visión General del Proyecto
 
-1. El usuario escribe una expresión matemática (por ejemplo, `5*8-3`) usando la interfaz gráfica.
-2. Al pulsar “=”, el cliente envía la expresión al endpoint `/api/calculate` mediante una petición **POST** con JSON.
-3. El servidor analiza y evalúa la expresión de forma segura utilizando el módulo `ast`, evitando la ejecución de código arbitrario.
-4. La respuesta devuelve el resultado en formato JSON, que se muestra en la pantalla.
+Este proyecto es una **API REST sencilla** que expone un único endpoint `/api/calculate`. Su objetivo principal es evaluar expresiones aritméticas proporcionadas por el cliente de forma segura, evitando la ejecución de código arbitrario. El backend está construido con **Flask**, y la lógica de evaluación se implementa mediante el módulo `ast` de Python para parsear y evaluar únicamente operadores matemáticos permitidos (`+`, `-`, `*`, `/`, `**` y unary minus).  
 
-El proyecto está pensado para ser ligero, fácil de desplegar y extensible a futuro (por ejemplo, añadir más operaciones o una capa de autenticación).
+El flujo típico es:
+
+1. El cliente envía una petición POST con un JSON que contiene la clave `"expression"`.
+2. La API valida el tipo del dato, analiza la expresión con `ast.parse` en modo *eval*, y llama a `_eval_expr` para calcular el resultado.
+3. Se devuelve un JSON con la clave `"result"` o, en caso de error, una descripción clara del problema.
+
+El proyecto también incluye una carpeta estática (`frontend`) que sirve un archivo `index.html`. Esta capa estática actúa como punto de entrada simple y puede ser sustituida por cualquier front‑end SPA si se desea.
 
 ---
 
 # Arquitectura del Sistema
 
-## Estructura de paquetes
+La arquitectura sigue el patrón **Model-View-Controller (MVC)** simplificado, donde:
 
-```
-.
-├── app.py                    # Punto de entrada principal
-├── requirements.txt          # Dependencias
-└── backend/
-    ├── __init__.py           # Factory y configuración de Flask
-    ├── app.py                # Instancia de la aplicación
-    └── routes.py             # Endpoints API
-```
-
-- **`app.py`**: Ejecuta el servidor en `0.0.0.0` con puerto configurable por variable de entorno.
-- **`backend/__init__.py`**: Crea y configura la app Flask, registra blueprints y sirve el frontend estático (`index.html`) desde `frontend/`.
-- **`backend/routes.py`**: Contiene la lógica del endpoint `/calculate`.
-
-## Diagrama Mermaid
+| Componente | Responsabilidad |
+|------------|-----------------|
+| **Flask App** (`app.py`, `__init__.py`) | Orquesta la aplicación, registra blueprints y sirve archivos estáticos. |
+| **Blueprint de API** (`routes.py`) | Contiene las rutas REST y la lógica de negocio (evaluación segura). |
+| **Parser AST** (`_eval_expr`) | Evalúa expresiones matemáticas de forma segura. |
+| **Frontend estático** (`frontend/`) | Sirve el punto de entrada HTML/CSS/JS al usuario final. |
 
 ```mermaid
-graph TD;
-    A[Cliente Web] -->|POST /api/calculate| B[Flask App];
-    B --> C[Parse Expression (AST)];
-    C --> D[Evaluate Safe Ops];
-    D --> E[Return Result JSON];
-    E -->|200 OK| A;
+flowchart TD
+    A[Cliente] --> B{HTTP POST /api/calculate}
+    B --> C[Flask App]
+    C --> D[Blueprint API]
+    D --> E[_eval_expr (AST Parser)]
+    E --> F[Resultado]
+    F --> G[Respuesta JSON]
+    G --> H[Cliente]
 ```
 
 ---
 
 # Endpoints de la API
 
-| Método | Ruta               | Descripción                                 | Parámetros Entrada                        | Respuesta Exitosa                     |
-|--------|--------------------|---------------------------------------------|-------------------------------------------|---------------------------------------|
-| POST   | `/api/calculate`   | Evalúa una expresión matemática segura.     | `{"expression": "string"}`                | `200 OK`<br>`{ "result": number }`    |
+| Método | Ruta | Parámetros | Respuesta Exitosa | Código HTTP | Descripción |
+|--------|------|------------|-------------------|-------------|-------------|
+| `POST` | `/api/calculate` | `application/json`: `{ "expression": "<string>" }` | `{ "result": <number> }` | 200 OK | Evalúa la expresión aritmética y devuelve el resultado. |
+| `POST` | `/api/calculate` | No válido o falta `expression` | `{ "error": "'expression' must be a string" }` | 400 Bad Request | Entrada mal formada. |
+| `POST` | `/api/calculate` | Expresión inválida (sintaxis, tipo) | `{ "error": "Invalid expression" }` | 422 Unprocessable Entity | Error de evaluación. |
+| `POST` | `/api/calculate` | División por cero | `{ "error": "division by zero" }` | 422 Unprocessable Entity | Operación aritmética no válida. |
 
-## Validaciones
+**Ejemplo de petición:**
 
-- **Tipo**: El campo `expression` debe ser un string; de lo contrario, se devuelve `400 Bad Request`.
-- **Sintaxis/Operadores**: Se permiten solo operadores aritméticos básicos (`+`, `-`, `*`, `/`, `**`) y números. Cualquier otra sintaxis genera `422 Unprocessable Entity` con mensaje `"Invalid expression"`.
-- **División por cero**: Devuelve `422` con mensaje `"division by zero"`.
+```bash
+curl -X POST http://localhost:5000/api/calculate \
+     -H 'Content-Type: application/json' \
+     -d '{"expression":"2 + 3 * (4 - 1)"}'
+```
 
-## Ejemplo de respuesta
+**Respuesta esperada:**
 
 ```json
-{
-  "result": 37
-}
+{ "result": 11 }
 ```
 
 ---
@@ -68,53 +67,68 @@ graph TD;
 
 1. **Clonar el repositorio**  
    ```bash
-   git clone <url_del_repositorio>
-   cd <directorio_del_proyecto>
+   git clone https://github.com/tu-usuario/proyecto-calculadora.git
+   cd proyecto-calculadora
    ```
 
-2. **Crear entorno virtual (opcional pero recomendado)**  
+2. **Crear un entorno virtual (opcional pero recomendado)**  
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # En Windows: venv\Scripts\activate
+   python3 -m venv .venv
+   source .venv/bin/activate   # En Windows: .\.venv\Scripts\activate
    ```
 
 3. **Instalar dependencias**  
    ```bash
-   pip install -r requirements.txt
+   pip install Flask==2.0.3
    ```
 
-4. **Ejecutar la aplicación**  
+4. **Ejecutar la aplicación en modo desarrollo**  
    ```bash
-   python app.py
+   export FLASK_APP=app.py      # En Windows: set FLASK_APP=app.py
+   flask run --port 5000
    ```
-   La API estará disponible en `http://0.0.0.0:5000/`.
 
-5. **Probar los tests** (opcional)  
+5. **Probar el endpoint** (ejemplo con `curl`)  
    ```bash
-   pytest
+   curl -X POST http://localhost:5000/api/calculate \
+        -H 'Content-Type: application/json' \
+        -d '{"expression":"10 / 2"}'
    ```
 
 ---
 
 # Flujo de Datos Clave
 
-1. **Entrada del usuario** → Botones del frontend generan una cadena (`expression`).
-2. **Petición HTTP** → Cliente envía `POST /api/calculate` con JSON.
-3. **Parser AST** → `ast.parse(expr, mode='eval')` convierte la expresión en árbol sintáctico.
-4. **Evaluación segura**  
-   - Recursión sobre nodos: `Num`, `Constant`, `BinOp`, `UnaryOp`.  
-   - Operadores permitidos definidos en `_ALLOWED_OPERATORS`.
-5. **Resultado** → Se serializa a JSON y se envía de vuelta al cliente.
-6. **Renderizado** → El script JavaScript actualiza el display con el resultado o muestra un error.
+```mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant F as Flask App
+    participant B as API Blueprint
+    participant E as _eval_expr
+
+    C->>F: POST /api/calculate (JSON)
+    F->>B: Rutas y lógica
+    B->>E: parse(expr) → AST
+    E-->>B: Resultado numérico o excepción
+    B->>F: Respuesta JSON
+    F->>C: HTTP 200/400/422 + JSON
+```
+
+1. **Recepción**: El cliente envía la expresión en el cuerpo de la petición.
+2. **Parseo**: `ast.parse` convierte la cadena a un árbol sintáctico seguro.
+3. **Evaluación**: `_eval_expr` recorre recursivamente el AST, permitiendo solo operadores definidos y lanzando excepciones para casos no soportados o errores aritméticos.
+4. **Respuesta**: Se devuelve el resultado o un mensaje de error con el código HTTP apropiado.
 
 ---
 
 # Extensiones Futuras (Opcional)
 
-- **Soporte para funciones matemáticas** (`sin`, `cos`, `sqrt`) mediante la extensión del AST y una tabla de funciones seguras.
-- **Persistencia de historial**: Guardar expresiones y resultados en una base de datos SQLite o PostgreSQL, con endpoints adicionales `/history`.
-- **Autenticación JWT**: Restringir el acceso a la API para usuarios registrados.
-- **API Swagger/OpenAPI**: Generar documentación automática del endpoint `calculate`.
-- **Frontend React/Vue**: Reemplazar el HTML/JS estático por un SPA más robusto y con pruebas end-to-end.
+| Área | Posible Mejora | Justificación |
+|------|----------------|---------------|
+| **Seguridad y Validación** | Implementar una lista blanca más granular, restringir la longitud máxima de la expresión. | Evita ataques DoS por expresiones muy largas o complejas. |
+| **Soporte a Funciones Matemáticas** | Añadir funciones como `sin`, `cos`, `sqrt` con un módulo seguro (`math`). | Amplía la utilidad sin sacrificar seguridad. |
+| **Persistencia de Historial** | Guardar cada cálculo en una base de datos (SQLite) para auditoría o análisis. | Útil para aplicaciones que requieran trazabilidad. |
+| **Autenticación y Rate‑Limiting** | Añadir tokens JWT y limitar peticiones por IP/usuario. | Mejora la escalabilidad y previene abuso. |
+| **Front‑end SPA** | Migrar `frontend/index.html` a un framework como React o Vue, consumiendo la API. | Proporciona una UX más rica y modular. |
 
 ---

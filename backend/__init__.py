@@ -1,19 +1,15 @@
-from flask import Flask, jsonify
+from flask import Flask, Blueprint
 
-# Factory function to create and configure the Flask app
 def create_app():
-    """Create and return a configured Flask application instance."""
-
-    # Configure Flask to serve static files from the frontend directory
+    """Factory function to create and configure the Flask app."""
     app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
     # Register blueprints
-    from . import routes as routes_bp
-    app.register_blueprint(routes_bp)
+    from .routes import api_bp
+    app.register_blueprint(api_bp, url_prefix='/api')
 
     @app.route('/')
-    def index():
-        """Serve the main frontend page."""
+    def serve_index():
         return app.send_static_file('index.html')
 
     return app

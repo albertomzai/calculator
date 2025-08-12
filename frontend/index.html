@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<title>Calculadora Web</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;background:#f0f0f0;margin:0;padding:20px;display:flex;justify-content:center;align-items:center;height:100vh;}
+  .calculator{background:#fff;border-radius:10px;box-shadow:0 4px 12px rgba(0,0,0,.1);width:320px;max-width:90%;padding:20px;display:grid;grid-template-rows:auto 1fr;gap:10px;}
+  .display{background:#222;color:#fff;font-size:2rem;text-align:right;padding:10px;border-radius:5px;min-height:60px;overflow:hidden;word-wrap:break-word;}
+  .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  button{font-size:1.2rem;background:#e0e0e0;border:none;border-radius:5px;padding:15px;cursor:pointer;transition:background .2s;}button:hover{background:#d0d0d0;}button.operator{background:#ff9500;color:#fff;}button.equal{background:#34c759;color:#fff;width:100%;grid-column:span 4;}
+  button.clear{background:#ff3b30;color:#fff;}
+</style>
+</head>
+<body>
+<div class="calculator">
+  <div id="display" class="display">0</div>
+  <div class="keys">
+    <button data-value="7">7</button>
+    <button data-value="8">8</button>
+    <button data-value="9">9</button>
+    <button class="operator" data-value="/">÷</button>
+
+    <button data-value="4">4</button>
+    <button data-value="5">5</button>
+    <button data-value="6">6</button>
+    <button class="operator" data-value="*">×</button>
+
+    <button data-value="1">1</button>
+    <button data-value="2">2</button>
+    <button data-value="3">3</button>
+    <button class="operator" data-value="-">−</button>
+
+    <button data-value="0">0</button>
+    <button data-value=".">.</button>
+    <button id="clear" class="clear">C</button>
+    <button class="operator" data-value= "+">+</button>
+
+    <button id="equals" class="equal">=</button>
+  </div>
+</div>
+<script>
+const display = document.getElementById('display');
+let expression = '';
+function updateDisplay(val){
+  if(expression==='0' && val!=='0') expression='';
+  expression += val;
+  display.textContent = expression || '0';
+}
+document.querySelectorAll('[data-value]').forEach(btn=>{
+  btn.addEventListener('click',()=>{updateDisplay(btn.dataset.value);});
+});
+document.getElementById('clear').addEventListener('click',()=>{expression='';display.textContent='0';});
+document.getElementById('equals').addEventListener('click',async ()=>{
+  if(!expression){alert('Ingrese una expresión');return;}
+  try{
+    const res = await fetch('/api/calculate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({expression})});
+    if(!res.ok) throw new Error('Error en la respuesta del servidor');
+    const data = await res.json();
+    if(typeof data.result==='number'){
+      expression=data.result.toString();
+      display.textContent=expression;
+    }else{throw new Error('Formato inesperado de respuesta');}
+  }catch(e){alert('Error: '+e.message);}
+});
+</script>
+</body>
+</html>

@@ -1,9 +1,1 @@
-# backend package
-from flask import Flask
-
-
-def create_app():
-    app = Flask(__name__)
-    from .routes import calculator_bp
-    app.register_blueprint(calculator_bp, url_prefix="/api")
-    return app
+['# backend/__init__.py - Factory de la aplicación Flask', '', 'from flask import Flask', '', 'def create_app():', '    """Crea y configura una instancia de Flask."""', '', "    app = Flask(__name__, static_folder='../frontend', static_url_path='')", '', '    # Registrar blueprint de la API', '    from . import routes', '    app.register_blueprint(routes.bp)', '', '    # Ruta raíz para servir el index.html del frontend', "    @app.route('/')", '    def index():', "        return app.send_static_file('index.html')", '', '    return app']

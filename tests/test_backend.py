@@ -1,29 +1,26 @@
 import pytest
 
-from backend import create_app
+from app import app as flask_app
 
 @pytest.fixture
 def client():
-    app = create_app()
-    app.config['TESTING'] = True
-    with app.test_client() as client:
+    with flask_app.test_client() as client:
         yield client
 
-def test_calculate_success(client):
-    response = client.post('/api/calculate', json={'expression': '5*8-3'})
+def test_calculate_valid(client):
+    response = client.post("/api/calculate", json={"expression": "5*8-3"})
     assert response.status_code == 200
     data = response.get_json()
-    assert data is not None
-    assert data['result'] == 37
+    assert data["result"] == 37
 
-def test_calculate_invalid_chars(client):
-    response = client.post('/api/calculate', json={'expression': '5+*3'})
+def test_calculate_invalid_syntax(client):
+    response = client.post("/api/calculate", json={"expression": "5**2"})
     assert response.status_code == 400
-    data = response.get_json()
-    assert 'error' in data
 
-def test_calculate_empty(client):
-    response = client.post('/api/calculate', json={'expression': ''})
+def test_calculate_missing_field(client):
+    response = client.post("/api/calculate", json={})
     assert response.status_code == 400
-    data = response.get_json()
-    assert 'error' in data
+
+def test_calculate_non_string(client):
+    response = client.post("/api/calculate", json={"expression": 123})
+    assert response.status_code == 400

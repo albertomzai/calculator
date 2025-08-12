@@ -1,14 +1,20 @@
-from flask import Flask
+"""Package inicializador para la aplicación backend."""
 
-def create_app():
-    """Crea y configura una instancia de la aplicación Flask."""
-    app = Flask(__name__, static_folder='../frontend', static_url_path='')
+from flask import Flask, Blueprint
 
-    from . import routes
-    app.register_blueprint(routes.bp)
+# Importar blueprint de rutas
+from .routes import api_bp
 
-    @app.route('/')
-    def index():
-        return app.send_static_file('index.html')
+def create_app() -> Flask:
+    """Factory function que crea y configura la app Flask."""
+    app = Flask(__name__, static_folder="../frontend", static_url_path="")
+
+# Registrar blueprint de API
+    app.register_blueprint(api_bp, url_prefix="/api")
+
+# Ruta raíz para servir index.html del frontend
+    @app.route("/")
+    def root():
+        return app.send_static_file("index.html")
 
     return app

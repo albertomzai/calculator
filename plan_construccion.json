@@ -2,40 +2,41 @@
   "api_contract": {
     "ruta": "/api/calculate",
     "metodo": "POST",
-    "descripcion": "Endpoint para evaluar una expresión matemática recibida como string.",
+    "descripcion": "Endpoint para evaluar una expresión matemática segura.",
     "parametros_entrada": {
       "expression": "string"
     },
     "respuesta_esperada": {
-      "result": "number (p.ej., 37, 5.6)"
+      "result": "number"
     }
   },
   "plan": [
     {
       "etapa": "backend",
       "tareas": [
-        "Crear la estructura de directorios para el proyecto Flask con un archivo 'app.py' y un virtualenv.",
-        "Instalar las dependencias necesarias: flask, python-dotenv (si se requiere configuración).",
-        "Definir en 'app.py' la aplicación Flask y configurar CORS si es necesario para llamadas desde el frontend local.",
-        "Implementar el endpoint POST '/api/calculate' que recibe un JSON con la clave 'expression'.",
-        "Validar que la expresión sea una cadena no vacía y contenga únicamente caracteres numéricos, operadores (+,-,*,/) y puntos decimales.",
-        "Evaluar la expresión de forma segura utilizando un parser mínimo (por ejemplo, ast.parse con comprobación de nodos permitidos) para evitar ejecución arbitraria.",
-        "Devolver el resultado en formato JSON: {\"result\": <valor>}.",
-        "Agregar manejo de excepciones para errores de sintaxis y devolver códigos HTTP 400 con mensaje descriptivo.",
-        "Escribir pruebas unitarias simples que verifiquen la correcta evaluación de expresiones básicas y la respuesta del endpoint."
+        "Crear la estructura de directorios para el backend con un paquete llamado 'backend' y un fichero '__init__.py'.",
+        "Definir una factory function 'create_app()' en 'backend/__init__.py' que configure Flask y registre los blueprints.",
+        "Implementar un blueprint en 'backend/routes.py' que defina el endpoint POST '/api/calculate'.",
+        "En la ruta, recibir JSON con la clave 'expression', validar su tipo y longitud mínima.",
+        "Evaluar la expresión de manera segura usando una implementación custom (por ejemplo, ast.parse) para evitar eval inseguro.",
+        "Devolver un JSON con la clave 'result' que contenga el valor numérico calculado o un error descriptivo si la evaluación falla.",
+        "Agregar manejo de excepciones y respuestas HTTP 400 en caso de entrada inválida.",
+        "Crear un fichero 'requirements.txt' con las dependencias 'Flask'.",
+        "Escribir pruebas unitarias en 'tests/test_backend.py' usando pytest para verificar casos válidos e inválidos del endpoint.",
+        "Configurar el archivo 'app.py' en la raíz que importe y ejecute la aplicación Flask creada por la factory."
       ]
     },
     {
       "etapa": "frontend",
       "tareas": [
-        "Crear el archivo 'index.html' en la raíz del proyecto con la estructura básica: DOCTYPE, head con título y estilo inline.",
-        "Diseñar una pantalla de calculadora usando CSS Grid o Flexbox para posicionar los botones numéricos, operadores, igual, borrar y punto decimal.",
-        "Añadir un elemento de salida (div) que muestre tanto el input actual como el resultado final.",
-        "Implementar JavaScript inline dentro del HTML para manejar eventos click en cada botón y construir la expresión matemática en una variable.",
-        "Agregar lógica para actualizar el display con cada entrada y limpiar al pulsar 'C'.",
-        "Cuando se pulsa '=', capturar la expresión completa, enviarla vía fetch POST a '/api/calculate' con header 'Content-Type: application/json'.",
-        "Procesar la respuesta JSON del backend y mostrar el valor de 'result' en el display.",
-        "Incluir manejo básico de errores (por ejemplo, alertar al usuario si la API devuelve un error o la expresión es inválida)."
+        "Crear un directorio 'frontend/' y dentro colocar 'index.html'.",
+        "Diseñar la estructura HTML de una calculadora clásica con una pantalla (div) para mostrar la expresión y el resultado.",
+        "Agregar botones numéricos 0‑9, operadores +, -, *, /, punto decimal, igual (=), y borrar (C).",
+        "Implementar estilos CSS en línea o dentro de un <style> bloque para lograr una apariencia limpia usando Flexbox/Grid.",
+        "Escribir JavaScript inline que capture los clics de los botones y construya la expresión matemática en la pantalla.",
+        "Al pulsar '=', enviar una petición fetch POST a '/api/calculate' con el cuerpo JSON {\"expression\": \"<exp>\"}.",
+        "Procesar la respuesta del backend y actualizar la pantalla con el valor de 'result', o mostrar un mensaje de error si ocurre.",
+        "Incluir manejo básico de errores de red y validación de que la expresión no esté vacía antes de enviar."
       ]
     }
   ]

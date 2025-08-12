@@ -1,20 +1,18 @@
-"""Package inicializador para la aplicación backend."""
+# backend package initialization
 
-from flask import Flask, Blueprint
+from flask import Flask
 
-# Importar blueprint de rutas
-from .routes import api_bp
+def create_app():
+    """Factory function to create and configure the Flask app."""
+    app = Flask(__name__, static_folder='static', template_folder='templates')
 
-def create_app() -> Flask:
-    """Factory function que crea y configura la app Flask."""
-    app = Flask(__name__, static_folder="../frontend", static_url_path="")
+    # Register blueprints
+    from .routes import api_bp
+    app.register_blueprint(api_bp, url_prefix='/api')
 
-# Registrar blueprint de API
-    app.register_blueprint(api_bp, url_prefix="/api")
-
-# Ruta raíz para servir index.html del frontend
-    @app.route("/")
-    def root():
-        return app.send_static_file("index.html")
+    # Root route to serve the calculator frontend
+    @app.route('/')
+    def index():
+        return app.send_static_file('index.html')
 
     return app

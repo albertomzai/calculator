@@ -1,54 +1,48 @@
-"""Blueprint que contiene las rutas de la API."""
-
-import ast
 from flask import Blueprint, request, jsonify
+import ast
 
-api_bp = Blueprint("api", __name__)
+api_bp = Blueprint('api', __name__)
 
-# Función auxiliar para evaluar expresiones seguras
-def _safe_eval(expr: str):
-    """Evalúa una expresión aritmética limitada a +,-,*,/ y números."""
-    try:
-        node = ast.parse(expr, mode="eval")
-    except SyntaxError as e:
-        raise ValueError(f"Syntax error in expression: {e}") from None
+# Supported operators for safe evaluation
+_OPERATORS = {ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.USub, ast.UAdd}
 
-    # Recorrer el árbol y validar nodos permitidos
-    for subnode in ast.walk(node):
-        if isinstance(subnode, (ast.BinOp, ast.UnaryOp, ast.Num, ast.Expression, ast.Load, ast.Constant)):
-            pass
-        elif isinstance(subnode, ast.Name):
-            raise ValueError("Variables are not allowed")
-        else:
-            # Operadores permitidos
-            if isinstance(subnode, ast.operator) and type(subnode) in (ast.Add, ast.Sub, ast.Mult, ast.Div):
-                continue
-            elif isinstance(subnode, ast.unaryop) and isinstance(subnode.op, ast.UAdd | ast.USub):
-                continue
-            else:
-                raise ValueError(f"Unsupported operation: {type(subnode).__name__}")
+def _eval_node(node):
+    if isinstance(node, ast.Expression):
+        return _eval_node(node.body)
+    elif isinstance(node, ast.Num):  # For Python <3.8
+        return node.n
+    elif hasattr(ast, 'Constant') and isinstance(node, ast.Constant):
+        if isinstance(node.value, (int, float)):
+            return node.value
+        raise ValueError('Unsupported constant type')
+    elif isinstance(node, ast.BinOp) and type(node.op) in _OPERATORS:
+        left = _eval_node(node.left)
+        right = _eval_node(node.right)
+        if isinstance(node.op, ast.Add): return left + right
+        if isinstance(node.op, ast.Sub): return left - right
+        if isinstance(node.op, ast.Mult): return left * right
+        if isinstance(node.op, ast.Div): return left / right
+        if isinstance(node.op, ast.Pow): return left ** right
+    elif isinstance(node, ast.UnaryOp) and type(node.op) in _OPERATORS:
+        operand = _eval_node(node.operand)
+        if isinstance(node.op, ast.UAdd): return +operand
+        if isinstance(node.op, ast.USub): return -operand
+    raise ValueError('Unsupported expression')
 
-    # Evaluar de forma segura usando eval con dict vacío
-    try:
-        result = eval(compile(node, filename="<ast>", mode="eval"), {}, {})
-    except Exception as e:
-        raise ValueError(f"Evaluation error: {e}") from None
-
-    return result
-
-@api_bp.route("/calculate", methods=["POST"])
+@api_bp.route('/calculate', methods=['POST'])
 def calculate():
     data = request.get_json(silent=True)
-    if not data or "expression" not in data:
-        return jsonify(error="Missing 'expression' field"), 400
+    if not data or 'expression' not in data:
+        return jsonify({'error': "Missing 'expression' key"}), 400
 
-    expr = data["expression"]
-    if not isinstance(expr, str) or len(expr.strip()) == 0:
-        return jsonify(error="Expression must be a non-empty string"), 400
+    expr = str(data['expression']).strip()
+    if len(expr) == 0:
+        return jsonify({'error': 'Expression cannot be empty'}), 400
 
     try:
-        result = _safe_eval(expr)
-    except ValueError as e:
-        return jsonify(error=str(e)), 400
+        parsed = ast.parse(expr, mode='eval')
+        result = _eval_node(parsed)
+    except Exception as e:
+        return jsonify({'error': f'Invalid expression: {str(e)}'}), 400
 
-    return jsonify(result=result)
+    return jsonify({'result': result})

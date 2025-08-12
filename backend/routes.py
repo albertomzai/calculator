@@ -1,1 +1,29 @@
-['# backend/routes.py - Blueprint con la API de cálculo', '', 'from flask import Blueprint, request, jsonify', 'import ast', '', "bp = Blueprint('api', __name__, url_prefix='/api')", '', 'def _safe_eval(expr: str):', '    """Evalúa expresiones aritméticas de forma segura."""', '', '    # Parsear la expresión a un AST', '    try:', "        node = ast.parse(expr, mode='eval')", '    except SyntaxError as e:', "        raise ValueError(f'Expresión inválida: {e}')", '', '    # Definir nodos permitidos', '    allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num, ast.Constant)', '    allowed_ops = (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod, ast.Pow, ast.USub, ast.UAdd)', '', '    def _check(node):', '        if not isinstance(node, allowed_nodes):', "            raise ValueError('Caracteres no permitidos en la expresión')", '', '        for child in ast.iter_child_nodes(node):', '            if isinstance(child, ast.BinOp) or isinstance(child, ast.UnaryOp):', '                if not isinstance(child.op, allowed_ops):', "                    raise ValueError('Operador no permitido')", '            _check(child)', '', '    _check(node)', '', '    # Evaluar el AST de forma segura', '    try:', '        return eval(compile(node, \'<string>\', \'eval\'), {"__builtins__": {}}, {})', '    except Exception as e:', "        raise ValueError(f'Error al evaluar: {e}')", '', "@bp.route('/calculate', methods=['POST'])", 'def calculate():', '    data = request.get_json(silent=True)', "    if not data or 'expression' not in data:", '        return jsonify({\'error\': "Falta la clave \'expression\'")}, 400', '', "    expr = str(data['expression']).strip()", '    if len(expr) < 1:', "        return jsonify({'error': 'La expresión no puede estar vacía'}), 400", '', '    try:', '        result = _safe_eval(expr)', '    except ValueError as e:', "        return jsonify({'error': str(e)}), 400", '', "    return jsonify({'result': result})"]
+from flask import Blueprint, request, jsonify
+import ast
+
+bp = Blueprint('api', __name__, url_prefix='/api')
+
+@bp.route('/calculate', methods=['POST'])
+def calculate():
+    data = request.get_json()
+    if not data or 'expression' not in data:
+        return jsonify({'error': "Missing 'expression' field"}), 400
+
+    expression = str(data['expression']).strip()
+    if len(expression) == 0:
+        return jsonify({'error': "Expression cannot be empty"}), 400
+
+    try:
+        # Parse the expression safely
+        node = ast.parse(expression, mode='eval')
+
+        # Allowed nodes: Expression, BinOp, UnaryOp, Num, Constant, operators
+        for subnode in ast.walk(node):
+            if not isinstance(subnode, (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num, ast.Constant, ast.operator, ast.unaryop)):
+                return jsonify({'error': "Invalid characters or operations"}), 400
+
+        # Evaluate the expression safely
+        result = eval(compile(node, '<string>', 'eval'), {"__builtins__": None}, {})
+        return jsonify({'result': result})
+    except Exception as e:
+        return jsonify({'error': f'Error evaluating expression: {str(e)}'}), 400

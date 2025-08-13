@@ -1,123 +1,143 @@
-# Visión General del Proyecto
-
-El proyecto **calculator** es una calculadora web que separa la lógica de cálculo en un backend Python con Flask y ofrece una API RESTful para evaluar expresiones matemáticas. La aplicación no requiere base de datos, ya que los cálculos son volátiles y se procesan directamente en memoria.
-
-## Flujo General
-
-- El cliente (SPA) envía la expresión a través de **POST /api/calculate**.
-- El backend valida la entrada, analiza la expresión con el módulo `ast` para evitar evaluaciones inseguras y devuelve el resultado o un error.
-- La SPA muestra el resultado en la pantalla de la calculadora.
-
-# Arquitectura del Sistema
-
-La arquitectura sigue un patrón **Monolito ligero**:
-
-```mermaid
-graph TD;
-  A[Cliente (SPA)] -->|POST /api/calculate| B[Flask App];
-  B --> C{Evaluación Segura};
-  C --> D[Resultado];
-  D -->|JSON| A;
-```
-
-### Componentes Clave
-
-| Componente | Descripción | Ruta de Código |
-|------------|-------------|----------------|
-| `app.py`   | Inicializa la aplicación Flask y registra blueprints. | `calculator/app.py` |
-| `routes.py`| Define la lógica del endpoint `/calculate`. | `calculator/routes.py` |
-| `__init__.py` | Factory de la app, configuración del static folder y ruta raíz. | `calculator/__init__.py` |
-
-# Endpoints de la API
-
-## POST /api/calculate
-
-### Descripción
-- Recibe una expresión matemática como string.
-- Evalúa la expresión de forma segura usando el módulo `ast`.
-- Devuelve un JSON con el resultado o un mensaje de error.
-
-| Método | Ruta | Tipo de Contenido | Respuesta Exitosa | Código de Estado |
-|--------|------|-------------------|--------------------|------------------|
-| POST   | /api/calculate | application/json | {"result": 37} | 200 OK |
-
-### Ejemplo de Solicitud
-
-```http
-POST /api/calculate HTTP/1.1
-Content-Type: application/json
-
 {
-  "expression": "5*8-3"
+  "files": [
+    {
+      "filename": "docs/backend_documentation.md",
+      "action": "create_or_update",
+      "code": [
+        "# Visión General del Proyecto",
+        "",
+        "El proyecto es una API de cálculo simple construida con **Flask**. Su objetivo principal es recibir expresiones matemáticas en formato string a través de un endpoint `/api/calculate` y devolver el resultado numérico.",
+        "",
+        "La aplicación sigue la arquitectura clásica de Flask con una *factory* que permite crear la instancia de la app y registrar blueprints, lo cual facilita la extensión futura y las pruebas unitarias. Los archivos principales son:",
+        "",
+        "- `app.py`: Punto de entrada que crea la instancia de la aplicación.",
+        "- `routes.py`: Define el blueprint `api_bp` con la lógica de evaluación segura.",
+        "- `__init__.py`: Contiene la función `create_app` y registra los blueprints.",
+        "",
+        "La API solo permite operadores aritméticos básicos (`+`, `-`, `*`, `/`, `**`) y soporta números enteros y flotantes. La evaluación se realiza mediante el módulo `ast` para evitar la ejecución de código arbitrario.",
+        "",
+        "# Arquitectura del Sistema",
+        "",
+        "```mermaid",
+        "graph TD;",
+        "    Client -->|POST /api/calculate| FlaskApp;",
+        "    FlaskApp -->|Blueprint api_bp| CalculateEndpoint;",
+        "    CalculateEndpoint -->|Parse & Eval| ASTParser;",
+        "    ASTParser -->|Return result| FlaskApp;",
+        "    FlaskApp -->|JSON response| Client;",
+        "```",
+        "",
+        "## Componentes Clave",
+        "",
+        "| Componente | Responsabilidad | Detalles Técnicos |",
+        "|------------|-----------------|-------------------|",
+        "| `FlaskApp` | Servidor web que expone la API y sirve el frontend estático. | Instancia de Flask con `static_folder='../frontend'`. |",
+        "| `api_bp` | Blueprint que agrupa los endpoints de la API. | Registrado bajo `/api`. |",
+        "| `calculate()` | Endpoint que procesa la expresión recibida. | Valida JSON, parsea con `ast.parse`, evalúa con `_eval_expr`. |",
+        "| `_eval_expr(node)` | Evaluador recursivo seguro. | Solo acepta nodos de tipo Num/Constant, BinOp y UnaryOp con operadores permitidos. |",
+        "",
+        "# Endpoints de la API",
+        "",
+        "## `/api/calculate`",
+        "",
+        "**Método:** POST",
+        "",
+        "**Descripción:**** Evalúa una expresión matemática segura.",
+        "",
+        "**Request Body (JSON):**",
+        "",
+        "| Campo       | Tipo   | Requerido | Descripción                               |",
+        "|-------------|--------|-----------|-------------------------------------------|",
+        "| `expression` | string | Sí        | La expresión aritmética a evaluar.         |",
+        "",
+        "**Ejemplo de Request:**",
+        "",
+        "```http",
+        "POST /api/calculate HTTP/1.1",
+        "Content-Type: application/json",
+        "",
+        "{",
+        '  "expression": "(2 + 3) * 4 - 5 ** 2"',
+        "}"
+        "```",
+        "",
+        "**Respuesta Exitosa (200):**",
+        "",
+        "```json",
+        "{",
+        '  "result": -9',
+        "}"
+        "```",
+        "",
+        "**Errores comunes:**",
+        "",
+        "| Código | Mensaje de error                 | Causa típica                          |",
+        "|--------|----------------------------------|---------------------------------------|",
+        "| 400    | `'expression' must be a string` | Campo faltante o no string.           |",
+        "| 422    | `Invalid expression`             | Sintaxis inválida o nodos no permitidos.|",
+        "| 422    | `division by zero`               | Operación de división por cero.       |",
+        "",
+        "# Instrucciones de Instalación y Ejecución",
+        "",
+        "1. **Clonar el repositorio**:",
+        "",
+        "   ```bash",
+        "   git clone https://github.com/tu_usuario/tu_repositorio.git",
+        "   cd tu_repositorio",
+        "   ```",
+        "",
+        "2. **Crear y activar un entorno virtual (opcional pero recomendado):**",
+        "",
+        "   ```bash",
+        "   python3 -m venv .venv",
+        "   source .venv/bin/activate  # En Windows: .venv\\Scripts\\activate",
+        "   ```",
+        "",
+        "3. **Instalar dependencias:**",
+        "",
+        "   ```bash",
+        "   pip install -r requirements.txt",
+        "   ```",
+        "",
+        "4. **Ejecutar la aplicación en modo desarrollo:**",
+        "",
+        "   ```bash",
+        "   export FLASK_APP=app.py",
+        "   flask run --debugger",
+        "   ```",
+        "",
+        "5. **Probar el endpoint** (puedes usar `curl` o Postman):",
+        "",
+        "   ```bash",
+        "   curl -X POST http://127.0.0.1:5000/api/calculate \\",
+        "     -H \"Content-Type: application/json\" \\",
+        "     -d '{\"expression\": \"2 + 3 * (4 - 1)\"}'",
+        "   ```",
+        "",
+        "# Flujo de Datos Clave",
+        "",
+        "```mermaid",
+        "sequenceDiagram",
+        "    participant Client",
+        "    participant FlaskApp as App",
+        "    participant Parser",
+        "    participant Evaluator",
+        "",
+        "    Client->>+FlaskApp: POST /api/calculate {\"expression\": \"...\"}",
+        "    FlaskApp->>Parser: ast.parse(expression)",
+        "    Parser-->>Evaluator: AST tree",
+        "    Evaluator->>Evaluator: _eval_expr(node)",
+        "    Evaluator-->>FlaskApp: result or error",
+        "    FlaskApp->>-Client: JSON response",
+        "```",
+        "",
+        "# Extensiones Futuras (Opcional)",
+        "",
+        "- **Autenticación y autorización**: Añadir JWT o OAuth para proteger el endpoint.",
+        "- **Cacheo de resultados**: Implementar Redis/Memcached para evitar recalcular expresiones repetidas.",
+        "- **Soporte a funciones trigonométricas**: Extender `_ALLOWED_OPERATORS` e incluir nodos `ast.Call` con una whitelist segura.",
+        "- **Validación avanzada**: Utilizar Pydantic o Marshmallow para validar el payload JSON antes de la evaluación."
+      ]
+    }
+  ]
 }
-```
-
-### Ejemplo de Respuesta
-
-```json
-{
-  "result": 37
-}```
-
-### Manejo de Errores
-
-| Código | Mensaje | Descripción |
-|--------|---------|-------------|
-| 400    | `'expression' must be a string` | Entrada no válida. |
-| 422    | `Invalid expression` | Expresión mal formada. |
-| 422    | `division by zero` | División por cero detectada. |
-
-# Instrucciones de Instalación y Ejecución
-
-1. **Clonar el repositorio**:
-
-   ```bash
-   git clone https://github.com/albertomzai/calculator.git
-   cd calculator
-   ```
-
-2. **Crear un entorno virtual (opcional pero recomendado)**:
-
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # Windows: .venv\Scripts\activate
-   ```
-
-3. **Instalar dependencias**:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Ejecutar la aplicación**:
-
-   ```bash
-   export FLASK_APP=calculator.app
-   flask run --host=0.0.0.0 --port=5000
-   ```
-
-5. **Acceder a la calculadora**:
-
-   Abrir un navegador y navegar a `http://localhost:5000`. La SPA se servirá desde el directorio `frontend`.
-
-# Flujo de Datos Clave
-
-```mermaid
-sequenceDiagram
-    participant U as Usuario
-    participant S as SPA (index.html)
-    participant B as Flask Backend
-
-    U->>S: Introduce expresión y pulsa '='
-    S->>B: POST /api/calculate {"expression": "..."}
-    B-->>S: 200 OK {"result": ...}
-    S->>U: Muestra resultado en pantalla
-```
-
-# Extensiones Futuras (Opcional)
-
-- **Persistencia**: Añadir una base de datos para historial de cálculos.
-- **Autenticación**: Implementar JWT para usuarios registrados.
-- **Cálculo avanzado**: Soporte para funciones trigonométricas, logaritmos y exponenciales.
-- **Internationalización**: Soportar múltiples idiomas en la interfaz.
-- **Testing**: Añadir pruebas unitarias y de integración con pytest.

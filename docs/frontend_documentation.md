@@ -1,104 +1,78 @@
-{
-  "files": [
-    {
-      "filename": "docs/calculadora_web_documentacion.md",
-      "action": "create_or_update",
-      "code": [
-        "# Visión General del Proyecto",
-        "",
-        "El proyecto es una **calculadora web** sencilla, implementada con HTML, CSS y JavaScript puro. La interfaz de usuario está compuesta por un visor que muestra la expresión actual o el resultado final, y una cuadrícula de botones para los dígitos, operadores aritméticos y funciones especiales (igual, borrar).",
-        "",
-        "Al pulsar cualquier botón numérico u operador, se construye una cadena `expression` que representa la operación a evaluar. Cuando el usuario pulsa el botón **=**, la expresión se envía al backend mediante una petición `POST /api/calculate`. El servidor procesa la expresión y devuelve el resultado, que luego se muestra en el visor.",
-        "",
-        "El flujo de interacción es totalmente asíncrono: mientras se espera la respuesta del servidor, la UI permanece receptiva y no bloquea al usuario. En caso de error (por ejemplo, una expresión inválida), el cliente captura la excepción y muestra un mensaje genérico \"Error\" en pantalla.",
-        "",
-        "El proyecto está pensado como punto de partida para explorar conceptos de arquitectura de API RESTful, manejo de expresiones matemáticas seguras y diseño de interfaces ligeras.",
-        "",
-        "---",
-        "# Arquitectura del Sistema",
-        "",
-        "La aplicación se divide en dos capas:",
-        "",
-        "- **Frontend**: HTML/CSS/JS que renderiza la calculadora y comunica con el backend vía HTTP.",
-        "- **Backend**: Un servicio REST expuesto bajo `/api/calculate` que recibe una expresión JSON, valida y evalúa de forma segura y devuelve el resultado.",
-        "",
-        "A continuación se muestra un diagrama Mermaid que ilustra la interacción entre cliente y servidor:",
-        "",
-        "```mermaid",
-        "sequenceDiagram",
-        "    participant User as Usuario",
-        "    participant Browser as Navegador",
-        "    participant Server as Backend",
-        "",
-        "    User->>Browser: Pulsa botón =",
-        "    Browser->>Server: POST /api/calculate { expression }",
-        "    Server-->>Browser: 200 OK { result }",
-        "    Browser->>User: Muestra resultado en visor",
-        "```",
-        "",
-        "---",
-        "# Endpoints de la API",
-        "",
-        "| Método | Ruta            | Descripción                               | Payload de Entrada                 | Respuesta (JSON)                     | Código HTTP |",
-        "|--------|-----------------|-------------------------------------------|------------------------------------|--------------------------------------|-------------|",
-        "| POST   | `/api/calculate` | Evalúa una expresión aritmética segura    | `{ \"expression\": \"2+3*4\" }`      | `{ \"result\": 14 }`                  | 200 OK      |",
-        "| POST   | `/api/calculate` | Error de sintaxis o evaluación            | `{ \"expression\": \"2++3\" }`      | `{ \"message\": \"Invalid expression\"}` | 400 Bad Request |",
-        "",
-        "## Detalles de Implementación",
-        "",
-        "- **Validación**: Se evita la ejecución directa de `eval`. En un entorno real se usaría una librería como `mathjs` con sandboxing.",
-        "- **Seguridad**: Sólo se aceptan caracteres numéricos y operadores aritméticos básicos (`+ - * / .`).",
-        "",
-        "---",
-        "# Instrucciones de Instalación y Ejecución",
-        "",
-        "1. Clonar el repositorio:",
-        "",
-        "   ```bash",
-        "   git clone https://github.com/tuusuario/calculadora-web.git",
-        "   cd calculadora-web",
-        "   ```",
-        "",
-        "2. Instalar dependencias (Node.js 18+):",
-        "",
-        "   ```bash",
-        "   npm install",
-        "   ```",
-        "",
-        "3. Ejecutar el servidor:",
-        "",
-        "   ```bash",
-        "   npm start",
-        "   ```",
-        "",
-        "4. Abrir el navegador en `http://localhost:3000` y usar la calculadora.",
-        "",
-        "---",
-        "# Flujo de Datos Clave",
-        "",
-        "1. **Entrada del usuario** – Pulsar botones numéricos/opera­torios → se concatena a `expression`.",
-        "2. **Solicitud al backend** – Al pulsar `=`, el cliente envía:",
-        "",
-        "   ```json",
-        "   { \"expression\": \"<cadena>\" }",
-        "   ```",
-        "",
-        "3. **Procesamiento en servidor** – Se valida la expresión, se evalúa y se devuelve:",
-        "",
-        "   ```json",
-        "   { \"result\": <valor numérico> }",
-        "   ```",
-        "",
-        "4. **Actualización de UI** – El cliente recibe el resultado, actualiza `expression` con él y refresca el visor.",
-        "",
-        "---",
-        "# Extensiones Futuras (Opcional)",
-        "",
-        "- **Persistencia**: Añadir una tabla SQLite para almacenar historial de cálculos por usuario.",
-        "- **Autenticación**: JWT para identificar usuarios y limitar el número de peticiones.",
-        "- **Soporte avanzado**: Funciones trigonométricas, exponenciación, notación científica.",
-        "- **UI React/Vue**: Reescribir la capa frontend con un framework moderno para mayor escalabilidad."
-      ]
-    }
-  ]
-}
+# Visión General del Proyecto
+
+La calculadora web es una aplicación de una sola página (SPA) que permite a los usuarios introducir expresiones matemáticas y obtener resultados en tiempo real. El frontend está construido con HTML5, CSS3 y JavaScript ES6, sin dependencias externas ni frameworks. La lógica de cálculo se delega al backend Flask mediante una única llamada RESTful.
+
+# Arquitectura del Sistema
+
+El frontend sigue una arquitectura **MVC ligera**:
+
+- **Modelo:** No aplica (el estado está en el componente JavaScript).
+- **Vista:** Un único archivo `index.html` con un contenedor `.calculator`, una pantalla de display y un grid de botones.
+- **Controlador:** Funciones JavaScript que manejan eventos de clic, construyen la expresión, actualizan la vista y realizan la llamada al backend.
+
+La comunicación entre frontend y backend se realiza a través de `fetch` con formato JSON. El flujo de datos es:
+
+```mermaid
+sequenceDiagram
+    participant User as Usuario
+    participant Frontend as Frontend JS
+    participant Backend as Flask API
+
+    User->>Frontend: Hace clic en botones (0-9, +,-,*,/,.)
+    Frontend-->>User: Actualiza display con expresión
+    User->>Frontend: Clic en '='
+    Frontend->>Backend: POST /api/calculate { expression }
+    Backend-->>Frontend: 200 { result }
+    Frontend-->>User: Muestra resultado en display
+```
+
+# Endpoints de la API
+
+| Método | Ruta            | Descripción                                      | Cuerpo de Solicitud                     | Respuesta (Ejemplo)                |
+|--------|-----------------|---------------------------------------------------|-----------------------------------------|------------------------------------|
+| POST   | `/api/calculate` | Calcula una expresión matemática segura.         | `{ "expression": "5*8-3" }`           | `{ "result": 37 }`                |
+
+## Detalles de Implementación
+
+- **Seguridad:** El backend debe evaluar la expresión usando `ast.literal_eval` o una librería segura para evitar inyección.
+- **Manejo de Errores:** Si la expresión es inválida, el backend devuelve `400 Bad Request` con un mensaje JSON `{ "message": "Invalid expression" }`.
+
+# Instrucciones de Instalación y Ejecución
+
+1. Clonar el repositorio:
+
+   ```bash
+   git clone https://github.com/albertomzai/calculator.git
+   cd calculator
+   ```
+
+2. Instalar las dependencias del backend (Flask):
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Iniciar el servidor Flask:
+
+   ```bash
+   flask run --host=0.0.0.0 --port=5000
+   ```
+
+4. Abrir `index.html` en un navegador:
+
+   - Si el servidor está corriendo en la misma máquina, simplemente abra el archivo local.
+   - Para acceder desde otro host, asegúrese de que `/api/calculate` esté accesible (p. ej., con CORS habilitado).
+
+# Flujo de Datos Clave
+
+1. **Entrada del Usuario:** Los botones generan eventos `click`. Cada valor se concatena a la variable `expression`.
+2. **Actualización de la Vista:** La función `updateDisplay()` refleja el contenido actual de `expression` en el DOM.
+3. **Solicitud al Backend:** Al presionar '=', la expresión completa se envía vía `POST /api/calculate`.
+4. **Respuesta del Backend:** El JSON con `{ result: <valor> }` es recibido, convertido a string y reemplaza la expresión mostrada.
+
+# Extensiones Futuras
+
+- **Persistencia de Historial:** Añadir una tabla en el backend para guardar las últimas operaciones por sesión o usuario.
+- **Soporte de Funciones Avanzadas:** Incluir funciones trigonométricas, exponenciación y paréntesis mediante un parser más robusto.
+- **Internacionalización (i18n):** Cambiar la interfaz a múltiples idiomas sin reescribir el HTML.
+- **Framework Frontend:** Migrar a React/Vue para una gestión de estado más estructurada en proyectos futuros.

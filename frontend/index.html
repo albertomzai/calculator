@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora</title>
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .calculator {
+            width: 260px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            background-color: #fff;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .display {
+            height: 60px;
+            margin-bottom: 10px;
+            background-color: #222;
+            color: #fff;
+            font-size: 2rem;
+            text-align: right;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            padding: 20px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #e0e0e0;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #d0d0d0;
+        }
+
+        .operator {
+            background-color: #ff9500;
+            color: white;
+        }
+
+        .equals {
+            background-color: #4cd964;
+            color: white;
+            grid-column: span 2;
+        }
+
+        .clear {
+            background-color: #ff3b30;
+            color: white;
+            grid-column: span 2;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div id="display" class="display">0</div>
+
+        <div class="buttons">
+            <!-- First Row -->
+            <button class="clear" data-action="clear">C</button>
+            <button class="operator" data-value="/">/</button>
+            <button class="operator" data-value="*">*</button>
+
+            <!-- Second Row -->
+            <button data-value="7">7</button>
+            <button data-value="8">8</button>
+            <button data-value="9">9</button>
+            <button class="operator" data-value="-">-</button>
+
+            <!-- Third Row -->
+            <button data-value="4">4</button>
+            <button data-value="5">5</button>
+            <button data-value="6">6</button>
+            <button class="operator" data-value= "+">+</button>
+
+            <!-- Fourth Row -->
+            <button data-value="1">1</button>
+            <button data-value="2">2</button>
+            <button data-value="3">3</button>
+
+            <!-- Fifth Row -->
+            <button data-value="0" style="grid-column: span 2;">0</button>
+            <button data-value=".">.</button>
+
+            <!-- Sixth Row -->
+            <button class="equals" data-action="calculate">=</button>
+        </div>
+    </div>
+
+    <script>
+        const display = document.getElementById('display');
+        let expression = '';
+
+        function updateDisplay(value) {
+            if (expression === '' && value === '0') return;
+            expression += value;
+            display.textContent = expression;
+        }
+
+        function clearExpression() {
+            expression = '';
+            display.textContent = '0';
+        }
+
+        async function calculateResult() {
+            if (!expression) return;
+            try {
+                const response = await fetch('/api/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ expression })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    display.textContent = err.message || 'Error';
+                    return;
+                }
+
+                const data = await response.json();
+                expression = String(data.result);
+                display.textContent = expression;
+            } catch (e) {
+                display.textContent = 'Error de red';
+            }
+        }
+
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const action = btn.dataset.action;
+                if (action === 'clear') {
+                    clearExpression();
+                } else if (action === 'calculate') {
+                    calculateResult();
+                } else {
+                    updateDisplay(btn.dataset.value);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,7 +1,6 @@
-# tests/test_backend.py
-
 import pytest
-from app_pkg.backend import create_app
+
+from backend import create_app
 
 @pytest.fixture
 def client():
@@ -15,9 +14,14 @@ def test_calculate_success(client):
     data = response.get_json()
     assert data['result'] == 37
 
-def test_calculate_invalid_expression(client):
+def test_calculate_invalid_syntax(client):
     response = client.post('/api/calculate', json={'expression': '5**'})
     assert response.status_code == 400
     data = response.get_json()
-    # The error message is returned in the ``message`` key by Flask's abort handler
-    assert 'Invalid syntax' in data['message']
+    assert 'Invalid syntax' in data['error']
+
+def test_calculate_missing_expression(client):
+    response = client.post('/api/calculate', json={})
+    assert response.status_code == 400
+    data = response.get_json()
+    assert 'Missing or empty' in data['error']

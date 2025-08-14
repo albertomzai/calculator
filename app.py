@@ -1,9 +1,6 @@
-# Root application entry point
-
-from app_pkg.backend import create_app
+from backend import create_app
 
 app = create_app()
 
 if __name__ == '__main__':
-    # Run the development server
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

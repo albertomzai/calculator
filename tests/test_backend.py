@@ -13,10 +13,14 @@ def test_calculate_success(client):
     data = response.get_json()
     assert data['result'] == 37
 
+def test_calculate_invalid_expression(client):
+    response = client.post('/api/calculate', json={'expression': '5**8'})
+    assert response.status_code == 400
+
 def test_calculate_missing_expression(client):
     response = client.post('/api/calculate', json={})
     assert response.status_code == 400
 
-def test_calculate_invalid_expr(client):
-    response = client.post('/api/calculate', json={'expression': '5**8'})
+def test_calculate_non_json(client):
+    response = client.post('/api/calculate', data='not a json')
     assert response.status_code == 400

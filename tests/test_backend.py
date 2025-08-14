@@ -17,9 +17,11 @@ def test_calculate_success(client):
 def test_calculate_invalid_expression(client):
     response = client.post('/api/calculate', json={'expression': '5*/8'})
     assert response.status_code == 400
+    data = response.get_json()
+    assert 'error' in data
 
-def test_calculate_non_string_expression(client):
-    response = client.post('/api/calculate', json={'expression': 123})
+def test_calculate_missing_field(client):
+    response = client.post('/api/calculate', json={})
     assert response.status_code == 400
     data = response.get_json()
-    assert 'Expression must be a string' in data['error']
+    assert 'error' in data

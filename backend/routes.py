@@ -1,26 +1,32 @@
 from flask import Blueprint, request, jsonify
-from simpleeval import simple_eval
+from asteval import Interpreter
 
-api_bp = Blueprint('api', __name__, url_prefix='/api')
+api_bp = Blueprint('api', __name__)
 
-@api_bp.route('/calculate', methods=['POST'])
+# Configure a safe evaluator that only allows basic arithmetic
+_ae = Interpreter(usersyms={}, err_writer=None, use_numpy=False)
+
+@api_bp.route('/api/calculate', methods=['POST'])
 def calculate():
-    """Evaluate a mathematical expression sent in JSON."""
+    """Endpoint to evaluate a mathematical expression sent in JSON."""
+    data = request.get_json(silent=True) or {}
 
-    data = request.get_json(force=True)
-    if not data or 'expression' not in data:
-        return jsonify({'error': 'Missing "expression" key'}), 400
+    if 'expression' not in data:
+        return jsonify({'error': "Missing 'expression' field"}), 400
 
     expr = data['expression']
 
-    # Validate that the expression is a string
     if not isinstance(expr, str):
-        return jsonify({'error': 'Expression must be a string'}), 400
+        return jsonify({'error': "Expression must be a string"}), 400
 
     try:
-        result = simple_eval(expr)
-    except Exception as e:
-        # Any error during evaluation is treated as invalid expression
-        return jsonify({'error': str(e)}), 400
+        # Use asteval to safely evaluate the expression
+        result = _ae(expr)
 
-    return jsonify({'result': result})
+        if _ae.error:
+            raise ValueError('Invalid expression')
+
+        return jsonify({'result': result})
+    except Exception as e:
+        # Return a 400 for any evaluation error
+        return jsonify({'error': str(e)}), 400

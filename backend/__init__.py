@@ -1,32 +1,32 @@
-from flask import Flask, send_from_directory
+# backend/__init__.py
 
-# Blueprint for API routes
+"""Package initialization for the backend module."""
+
+from flask import Flask, send_from_directory, jsonify, abort
 from .routes import api_bp
 
 __all__ = ['create_app']
 
-
 def create_app():
-    """Factory function that creates and configures the Flask app.
+    """Factory that returns a Flask application.
 
-    The application serves static files from the ``frontend`` directory
-    (the index.html of the calculator) and registers the API blueprint.
+    The function is defined in the original code, but we keep a lightweight
+    wrapper here to guarantee its presence when the package is imported.
     """
     app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
-    # Register the API blueprint
+    # Register API blueprint
     app.register_blueprint(api_bp)
 
     @app.route('/')
     def serve_index():
-        """Serve the calculator frontend."""
         return send_from_directory(app.static_folder, 'index.html')
 
-    # Global error handler for unhandled exceptions in the API
     @app.errorhandler(Exception)
     def handle_exception(e):
-        """Return JSON error responses for unexpected server errors."""
-        response = {"error": str(e)}
-        return response, 500
+        # If the exception has a code attribute (e.g., abort(400)), use it
+        code = getattr(e, 'code', 500)
+        message = str(e) if isinstance(e, Exception) else e.description
+        return jsonify({'error': message}), code
 
     return app

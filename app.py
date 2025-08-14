@@ -1,7 +1,6 @@
-# Entry point for local execution
+from backend import create_app
 
-from app_pkg import app
+app = create_app()
 
 if __name__ == '__main__':
-    # Run the Flask development server
     app.run(debug=True)

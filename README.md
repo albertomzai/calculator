@@ -1,91 +1,106 @@
 # Visión General del Proyecto
 
-Este repositorio alberga una **calculadora web** sencilla pero robusta que separa la lógica de cálculo en el backend y la presentación en un único archivo HTML.  
-La aplicación se ejecuta con Flask y expone una API REST para evaluar expresiones matemáticas de forma segura, mientras que la interfaz de usuario funciona como una SPA (Single Page Application) construida con HTML/CSS/JavaScript puro.
+Este repositorio contiene una **calculadora web** sencilla pero robusta que separa la lógica de cálculo en el backend y la presentación en un único archivo HTML. La aplicación se ejecuta con Flask y expone una API REST para evaluar expresiones matemáticas de forma segura, mientras que la interfaz funciona como una SPA (Single Page Application) construida con HTML/CSS/JavaScript puro.
 
-## Estructura del código
+El flujo típico es:
 
-- `app.py` – Punto de entrada que arranca el servidor Flask.  
-- `backend/` – Paquete que contiene la fábrica de la app (`create_app`) y las rutas API. Dentro se encuentra `routes.py`, donde se define el endpoint `/api/calculate` y la función recursiva `_eval_expr` que utiliza el módulo `ast` para evaluar únicamente operaciones aritméticas permitidas.  
-- `frontend/` – Carpeta con un único archivo `index.html`. Este documento incluye la lógica de la calculadora, los estilos y las llamadas a la API.  
-- `tests/` – Pruebas unitarias con Pytest que verifican el correcto funcionamiento del endpoint y la validación de entrada.
+- El usuario introduce una expresión matemática (ej.: `5*8-3`) usando los botones de la calculadora.
+- Al pulsar **=**, el cliente envía la expresión al backend mediante un `POST /api/calculate` con JSON.
+- El servidor evalúa la expresión de forma segura y devuelve el resultado en formato JSON.
+- La interfaz actualiza la pantalla con el valor obtenido.
+
+El proyecto está organizado en dos paquetes principales:
+
+| Carpeta | Descripción |
+|---------|-------------|
+| `backend/` | Contiene la aplicación Flask, las rutas y la lógica de evaluación segura. |
+| `frontend/` | Un único archivo `index.html` con HTML/CSS/JS que actúa como SPA. |
+
+El backend no requiere base de datos; todo el estado es transitorio.
 
 # Arquitectura del Sistema
 
 ```mermaid
-flowchart TD
-    A[Flask App] -->|register_blueprint| B(BluePrint "api")
-    B --> C[/api/calculate (POST)]
-    C --> D{_eval_expr}
-    D -->|returns result| E[JSON Response]
+flowchart TD;
+    A[Cliente] -->|HTTP POST| B[Flask App];
+    B --> C{API /api/calculate};
+    C --> D[_eval_expr];
+    D --> E[Resultado JSON];
+    E --> B;
+    B --> F[Respuesta HTTP];
+    F --> A;
 ```
 
-- **Flask App**: Punto central que configura la ruta estática y registra el blueprint de la API.  
-- **Blueprint “api”**: Agrupa todas las rutas relacionadas con la funcionalidad del backend.  
-- **Endpoint `/api/calculate`**: Recibe una expresión matemática en JSON, valida su tipo, la analiza con `ast.parse`, evalúa con `_eval_expr` y devuelve el resultado o un error.  
-- **Evaluador (`_eval_expr`)**: Recorre de forma segura el árbol sintáctico abstracto (AST) permitiendo solo operadores aritméticos básicos (`+ - * / **`) y números.
+**Componentes Clave**:
+
+- **Flask App**: `backend/app.py` crea la aplicación con la ruta raíz que sirve `index.html`.
+- **Blueprint API**: `backend/routes.py` define el endpoint `/calculate` y contiene `_eval_expr`, una función recursiva que evalúa solo operaciones aritméticas permitidas usando el módulo `ast`.
+- **Frontend SPA**: `frontend/index.html` incluye lógica JavaScript para construir la expresión, enviarla al backend y mostrar el resultado.
 
 # Endpoints de la API
 
-| Método | Ruta              | Descripción                                                                 |
-|--------|-------------------|-----------------------------------------------------------------------------|
-| POST   | `/api/calculate`  | Evalúa una expresión matemática enviada en JSON bajo el campo `expression`. Responde con `{ "result": <valor> }` o un error. |
+| Método | Ruta | Descripción | Parámetros | Respuesta | Código HTTP |
+|--------|------|-------------|------------|-----------|--------------|
+| POST | `/api/calculate` | Calcula una expresión matemática. | `expression`: string con la expresión a evaluar. | `{ "result": <number> }` o `{ "error": "mensaje" }` | 200 OK (éxito), 400 Bad Request, 422 Unprocessable Entity |
 
-**Ejemplo de petición**
+## Ejemplo de Solicitud
 
-```bash
-curl -X POST http://localhost:5000/api/calculate \
-     -H "Content-Type: application/json" \
-     -d '{"expression":"5*8-3"}'
+```http
+POST /api/calculate HTTP/1.1
+Content-Type: application/json
+
+{ "expression": "5*8-3" }
 ```
 
-**Respuesta exitosa**
+## Respuesta Exitosa
 
 ```json
-{
-  "result": 37
-}
+{ "result": 37 }
 ```
 
 # Instrucciones de Instalación y Ejecución
 
-1. **Clonar el repositorio**  
+1. **Clonar el repositorio**:
+
    ```bash
-   git clone https://github.com/tu_usuario/calc-web.git
-   cd calc-web
+   git clone https://github.com/albertomzai/calculator.git
+   cd calculator
    ```
 
-2. **Crear un entorno virtual (opcional pero recomendado)**  
+2. **Crear un entorno virtual (opcional pero recomendado)**:
+
    ```bash
    python -m venv .venv
    source .venv/bin/activate  # Windows: .\.venv\Scripts\activate
    ```
 
-3. **Instalar dependencias**  
+3. **Instalar dependencias**:
+
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Ejecutar la aplicación**  
+4. **Ejecutar la aplicación**:
+
    ```bash
    python app.py
    ```
 
-5. **Acceder en el navegador**  
-   Abre `http://localhost:5000`.
+5. **Acceder a la calculadora**: Abrir un navegador y navegar a `http://localhost:5000`.
 
 # Flujo de Datos Clave
 
-1. El usuario escribe una expresión en la calculadora web y pulsa “=”.  
-2. JavaScript captura el valor, lo envía a `/api/calculate` vía `fetch` con método POST.  
-3. Flask recibe la petición, extrae `expression`, valida su tipo y parsea con `ast.parse`.  
-4. `_eval_expr` recorre el AST evaluando solo operadores permitidos (`+ - * / **`).  
-5. El resultado (o error) se devuelve como JSON a la SPA.  
-6. La SPA muestra el resultado en la pantalla.
+| Paso | Acción | Entrada | Salida |
+|------|--------|---------|--------|
+| 1 | Usuario pulsa botón en la UI | Valor del botón (ej.: `7`, `+`) | Se concatena a la expresión actual |
+| 2 | Pulsa `=` | Expresión completa (`5*8-3`) | Envía POST al backend |
+| 3 | Backend evalúa | AST de la expresión | Resultado numérico o error |
+| 4 | Respuesta HTTP | JSON con `{ "result": ... }` | Se muestra en pantalla |
 
-# Extensiones Futuras
+# Extensiones Futuras (Opcional)
 
-- **Persistencia de historial**: Añadir una base de datos SQLite para almacenar las expresiones evaluadas por cada usuario.  
-- **Autenticación**: Implementar JWT o sesiones para que los usuarios puedan iniciar sesión y ver su historial personal.  
-- **Soporte de funciones trigonométricas**: Extender `_eval_expr` para aceptar `sin`, `cos`, `tan`, etc., usando el módulo `math`.  
-- **UI React/Vue**: Migrar la SPA a un framework moderno para una experiencia más rica y modular.
+- **Persistencia**: Añadir una base de datos para registrar historial de cálculos.
+- **Soporte de funciones trigonométricas**: Extender `_eval_expr` con `math.sin`, `math.cos`, etc.
+- **Internationalización**: Soportar múltiples idiomas en la UI.
+- **Testing Frontend**: Implementar pruebas unitarias con Jest o Cypress.
+- **Dockerizar**: Crear un `Dockerfile` y `docker-compose.yml` para despliegue sencillo.

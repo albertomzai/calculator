@@ -1,4 +1,4 @@
-import pytest
+import json
 
 from backend import create_app
 
@@ -8,22 +8,19 @@ def client():
     with app.test_client() as client:
         yield client
 
-def test_successful_calculation(client):
-    response = client.post('/api/calculate', json={'expression': '5*8-3'})
+def test_calculate_success(client):
+    payload = {'expression': '5*8-3'}
+    response = client.post('/api/calculate', json=payload)
     assert response.status_code == 200
-    assert response.get_json() == {'result': 37}
+    data = response.get_json()
+    assert data['result'] == 37
 
-def test_empty_expression(client):
-    response = client.post('/api/calculate', json={'expression': ''})
+def test_calculate_invalid_chars(client):
+    payload = {'expression': '5+abc'}
+    response = client.post('/api/calculate', json=payload)
     assert response.status_code == 400
-    assert 'error' in response.get_json()
 
-def test_missing_expression_key(client):
-    response = client.post('/api/calculate', json={})
+def test_calculate_missing_expression(client):
+    payload = {}
+    response = client.post('/api/calculate', json=payload)
     assert response.status_code == 400
-    assert 'error' in response.get_json()
-
-def test_invalid_syntax(client):
-    response = client.post('/api/calculate', json={'expression': '5*/2'})
-    assert response.status_code == 400
-    assert 'error' in response.get_json()

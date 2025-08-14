@@ -1,62 +1,28 @@
-import ast
-from flask import Blueprint, request, jsonify, abort
+# backend/routes.py
 
-# Define the Blueprint for calculation endpoints
-calc_bp = Blueprint('calc_bp', __name__)
+from flask import Blueprint, request, jsonify
+from .utils import safe_eval
 
-def _safe_eval(expr: str):
-    """Evaluate a mathematical expression safely.
+calc_bp = Blueprint('calc', __name__)
 
-    Supports only basic arithmetic operators: +, -, *, / and parentheses.
-    Raises ValueError if the expression contains unsupported nodes."""
-    try:
-        node = ast.parse(expr, mode='eval')
-    except SyntaxError as e:
-        raise ValueError(f'Invalid syntax: {e}') from None
-
-    allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num, ast.Constant,
-                     ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.USub, ast.UAdd,
-                     ast.Mod, ast.FloorDiv, ast.LParen, ast.RParen)  # LParen/RParen are not real nodes but keep for clarity
-
-    def _check(node):
-        if isinstance(node, ast.BinOp):
-            if not isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):
-                raise ValueError('Unsupported operator')
-            _check(node.left)
-            _check(node.right)
-        elif isinstance(node, ast.UnaryOp):
-            if not isinstance(node.op, (ast.UAdd, ast.USub)):
-                raise ValueError('Unsupported unary operator')
-            _check(node.operand)
-        elif isinstance(node, (ast.Num, ast.Constant)):
-            # Accept numeric constants only
-            if not isinstance(getattr(node, 'n', getattr(node, 'value', None)), (int, float)):
-                raise ValueError('Only numeric literals are allowed')
-        elif isinstance(node, ast.Expression):
-            _check(node.body)
-        else:
-            raise ValueError(f'Unsupported expression element: {type(node).__name__}')
-
-    _check(node)
-
-    # Evaluate the parsed AST safely using eval with empty globals/locals
-    return eval(compile(node, '<string>', 'eval'), {}, {})
-
-@calc_bp.route('/calculate', methods=['POST'])
+@calc_bp.route('/api/calculate', methods=['POST'])
 def calculate():
-    """Endpoint to evaluate a mathematical expression sent in JSON."""
-    if not request.is_json:
-        return jsonify({'error': 'Request must be JSON'}), 400
+    """Endpoint to evaluate a mathematical expression."""
+    data = request.get_json(silent=True) or {}
 
-    data = request.get_json()
-    expr = data.get('expression')
+    # Validate presence of 'expression'
+    if 'expression' not in data:
+        return jsonify({'error': "Missing 'expression' key in JSON payload."}), 400
 
-    if not isinstance(expr, str) or not expr.strip():
-        return jsonify({'error': "'expression' must be a non-empty string"}), 400
+    expression = data['expression']
+
+    # Validate type and non-empty string
+    if not isinstance(expression, str) or not expression.strip():
+        return jsonify({'error': "The 'expression' must be a non‑empty string."}), 400
 
     try:
-        result = _safe_eval(expr)
+        result = safe_eval(expression)
     except Exception as e:
-        return jsonify({'error': f'Invalid expression: {str(e)}'}), 400
+        return jsonify({'error': f"Invalid expression: {str(e)}"}), 400
 
     return jsonify({'result': result})

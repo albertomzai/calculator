@@ -1,42 +1,43 @@
-# Utility functions for safe evaluation of arithmetic expressions
+# backend/utils.py
 
 import ast
+import operator
 
-def _is_valid_node(node):
-    """Recursively ensure that the AST node contains only allowed operations."""
-    if isinstance(node, (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num, ast.Constant, ast.Load, ast.operator, ast.unaryop)):
-        return True
+_OPERATORS = {
+    ast.Add: operator.add,
+    ast.Sub: operator.sub,
+    ast.Mult: operator.mul,
+    ast.Div: operator.truediv,
+    ast.USub: operator.neg,
+}
 
-    # Allowed operators: + - * /
-    allowed_ops = {ast.Add, ast.Sub, ast.Mult, ast.Div}
-    if isinstance(node, ast.BinOp) and type(node.op) in allowed_ops:
-        return _is_valid_node(node.left) and _is_valid_node(node.right)
+def _eval(node):
+    if isinstance(node, ast.Num):  # For Python <3.8
+        return node.n
+    if hasattr(ast, 'Constant') and isinstance(node, ast.Constant):
+        if isinstance(node.value, (int, float)):
+            return node.value
+        raise ValueError('Unsupported constant type')
 
-    if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
-        return _is_valid_node(node.operand)
+    if isinstance(node, ast.BinOp) and type(node.op) in _OPERATORS:
+        left = _eval(node.left)
+        right = _eval(node.right)
+        return _OPERATORS[type(node.op)](left, right)
 
-    # Numbers
-    if isinstance(node, (ast.Num, ast.Constant)):
-        return True
+    if isinstance(node, ast.UnaryOp) and type(node.op) in _OPERATORS:
+        operand = _eval(node.operand)
+        return _OPERATORS[type(node.op)](operand)
 
-    return False
+    raise ValueError('Unsupported expression')
 
-def safe_eval_expression(expr: str):
-    """Evaluate a simple arithmetic expression safely.
+def safe_eval(expr: str):
+    """Safely evaluate a basic arithmetic expression.
 
-    Supports +, -, *, / and integer/float literals only.
-    Raises ValueError if the expression is invalid or contains disallowed nodes."""
+    Supports +, -, *, /, parentheses and unary minus.
+    Raises ValueError if the expression contains disallowed nodes."""
     try:
-        parsed = ast.parse(expr, mode='eval')
+        tree = ast.parse(expr, mode='eval')
     except SyntaxError as e:
         raise ValueError('Syntax error in expression') from e
 
-    # Validate AST structure
-    if not _is_valid_node(parsed.body):
-        raise ValueError('Expression contains disallowed operations')
-
-    # Use eval with empty globals and locals to compute the result
-    try:
-        return eval(compile(parsed, '<string>', 'eval'), {}, {})
-    except Exception as e:
-        raise ValueError('Error evaluating expression') from e
+    return _eval(tree.body)

@@ -1,18 +1,20 @@
-from flask import Flask, send_from_directory
+# backend/__init__.py
 
-# Import the Blueprint from routes module
+from flask import Flask
 from .routes import calc_bp
 
 def create_app():
-    """Factory function to create and configure the Flask application."""
+    """Factory function to create and configure the Flask app."""
     app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
-    # Register the calculation Blueprint under /api prefix
-    app.register_blueprint(calc_bp, url_prefix='/api')
+    # Register blueprints
+    app.register_blueprint(calc_bp)
 
     @app.route('/')
     def index():
-        """Serve the main frontend page."""
-        return send_from_directory(app.static_folder, 'index.html')
+        return app.send_static_file('index.html')
 
     return app
+
+# Expose the app instance for tests and other imports
+app = create_app()

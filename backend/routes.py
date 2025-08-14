@@ -1,56 +1,57 @@
-"""Rutas y lógica de cálculo para el backend."""
-
 import ast
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, abort
 
 calc_bp = Blueprint('calc', __name__)
 
 def _safe_eval(expr: str):
-    """Evalúa de forma segura una expresión aritmética básica.
+    """Evaluate a mathematical expression safely.
 
-    Se permite únicamente números, operadores + - * / y paréntesis.
-    """
-    # Validar que la cadena contenga solo caracteres permitidos
-    allowed_chars = set("0123456789+-*/(). ")
-    if not set(expr).issubset(allowed_chars):
-        raise ValueError('Expression contains invalid characters')
-
+    Only allows numbers and the operators + - * / .
+    Raises ValueError if the expression is invalid."""
     try:
-        # Parsear la expresión con ast para evitar eval inseguro
         node = ast.parse(expr, mode='eval')
-        for n in ast.walk(node):
-            if isinstance(n, (ast.BinOp, ast.UnaryOp, ast.Num, ast.Expression, ast.Load, ast.Expr, ast.Constant, ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Mod, ast.UAdd, ast.USub)):
-                continue
-            if isinstance(n, ast.Call):
-                raise ValueError('Function calls not allowed')
-            # Permitir sólo nodos aritméticos básicos
-            if not isinstance(n, (ast.BinOp, ast.UnaryOp, ast.Num, ast.Expression, ast.Load, ast.Expr, ast.Constant)):
-                raise ValueError('Unsupported operation in expression')
-    except Exception as e:
-        raise ValueError(f'Invalid expression: {e}')
+    except SyntaxError as e:
+        raise ValueError(f'Invalid syntax: {e}') from e
 
-    # Evaluar de forma segura con un entorno vacío
-    try:
-        result = eval(compile(node, '<string>', 'eval'), {'__builtins__': None}, {})
-    except Exception as e:
-        raise ValueError(f'Error evaluating expression: {e}')
+    def _validate(node):
+        if isinstance(node, ast.Expression):
+            return _validate(node.body)
+        elif isinstance(node, ast.BinOp):
+            if not isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):
+                raise ValueError('Unsupported operator')
+            _validate(node.left)
+            _validate(node.right)
+        elif isinstance(node, ast.UnaryOp):
+            if not isinstance(node.op, (ast.UAdd, ast.USub)):
+                raise ValueError('Unsupported unary operator')
+            _validate(node.operand)
+        elif isinstance(node, ast.Num):  # Python <3.8
+            return
+        elif isinstance(node, ast.Constant):  # Python >=3.8
+            if not isinstance(node.value, (int, float)):
+                raise ValueError('Invalid constant type')
+        else:
+            raise ValueError(f'Unsupported expression: {type(node).__name__}')
 
-    return result
+    _validate(node)
+    # Safe to evaluate now
+    return eval(compile(node, '<string>', mode='eval'))
 
 @calc_bp.route('/api/calculate', methods=['POST'])
 def calculate():
-    data = request.get_json(silent=True)
-    if not data or 'expression' not in data:
-        return jsonify({'error': "Missing 'expression' key"}), 400
+    """Endpoint to compute a mathematical expression."""
+    if not request.is_json:
+        abort(400, description='Request must be JSON')
 
-    expr = data['expression']
+    data = request.get_json()
+    expr = data.get('expression')
+
     if not isinstance(expr, str) or not expr.strip():
-        return jsonify({'error': 'Expression must be a non-empty string'}), 400
+        abort(400, description="'expression' must be a non-empty string")
 
     try:
         result = _safe_eval(expr)
-    except ValueError as e:
-        current_app.logger.debug(f'Calculation error: {e}')
-        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        abort(400, description=str(e))
 
     return jsonify({'result': result})

@@ -1,18 +1,10 @@
 cy.visit('/');
-  
-// Enter 12
-cy.contains('1').click();
-cy.contains('2').click();
 
-// Add +
-cy.contains('+').click();
+cy.get('[data-testid="btn-1"]').click();
+cy.get('[data-testid="btn-2"]').click();
+cy.get('[data-testid="btn-plus"]').click();
+cy.get('[data-testid="btn-7"]').click();
 
-// Enter 7
-cy.contains('7').click();
+cy.get('[data-testid="btn-equal"]').click();
 
-// Press equals
-cy.contains('=').click();
-  
-// Verify result is 19
-cy.get('.display, #display, .screen')
-  .should('contain.text', '19');
+cy.get('[data-testid="display"]').should('have.text', '19');

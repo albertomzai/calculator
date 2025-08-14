@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora Web</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+      .calculator {
+          max-width: 400px;
+          margin: 2rem auto;
+          padding: 1rem;
+          border-radius: 0.5rem;
+          background-color: #f8f9fa;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      }
+
+      .display {
+          height: 60px;
+          font-size: 2rem;
+          text-align: right;
+          padding-right: 0.75rem;
+          background-color: #e9ecef;
+          border-radius: 0.25rem;
+      }
+
+      .btn-calculator {
+          width: 100%;
+          height: 60px;
+          font-size: 1.5rem;
+      }
+
+      @media (max-width: 576px) {
+          .display {
+              height: 50px;
+              font-size: 1.75rem;
+          }
+          .btn-calculator {
+              height: 50px;
+              font-size: 1.25rem;
+          }
+      }
+    </style>
+</head>
+<body>
+
+    <div class="container calculator">
+        <!-- Pantalla -->
+        <input type="text" id="display" class="form-control display mb-3" readonly value="0">
+
+        <!-- Botones de la calculadora -->
+        <div class="row g-2">
+            <!-- Primera fila: C, / -->
+            <div class="col-4"><button id="clear" class="btn btn-danger btn-calculator">C</button></div>
+            <div class="col-4"></div>
+            <div class="col-4"><button id="divide" class="btn btn-secondary btn-calculator">/</button></div>
+
+            <!-- Segunda fila: 7,8,9 -->
+            <div class="col-4"><button class="btn btn-light btn-calculator num-btn">7</button></div>
+            <div class="col-4"><button class="btn btn-light btn-calculator num-btn">8</button></div>
+            <div class="col-4"><button class="btn btn-light btn-calculator num-btn">9</button></div>
+
+            <!-- Tercera fila: 4,5,6 -->
+            <div class="col-4"><button class="btn btn-light btn-calculator num-btn">4</button></div>
+            <div class="col-4"><button class="btn btn-light btn-calculator num-btn">5</button></div>
+            <div class="col-4"><button class="btn btn-light btn-calculator num-btn">6</button></div>
+
+            <!-- Cuarta fila: 1,2,3 -->
+            <div class="col-4"><button class="btn btn-light btn-calculator num-btn">1</button></div>
+            <div class="col-4"><button class="btn btn-light btn-calculator num-btn">2</button></div>
+            <div class="col-4"><button class="btn btn-light btn-calculator num-btn">3</button></div>
+
+            <!-- Quinta fila: 0,.,= -->
+            <div class="col-4"><button class="btn btn-light btn-calculator num-btn">0</button></div>
+            <div class="col-4"><button id="decimal" class="btn btn-secondary btn-calculator">.</button></div>
+            <div class="col-4"><button id="equals" class="btn btn-primary btn-calculator">=</button></div>
+
+            <!-- Sexta fila: -, + -->
+            <div class="col-6"><button id="subtract" class="btn btn-secondary btn-calculator">-</button></div>
+            <div class="col-6"><button id="add" class="btn btn-secondary btn-calculator">+</button></div>
+        </div>
+
+        <!-- Alertas de error -->
+        <div id="alertContainer" class="mt-3"></div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+      const display = document.getElementById('display');
+      const alertContainer = document.getElementById('alertContainer');
+
+      // Construir expresión
+      function appendToDisplay(value) {
+          if (display.value === '0') {
+              display.value = value;
+          } else {
+              display.value += value;
+          }
+      }
+
+      // Borrar todo
+      document.getElementById('clear').addEventListener('click', () => {
+          display.value = '0';
+          clearAlert();
+      });
+
+      // Operadores y decimal
+      ['add', 'subtract', 'divide'].forEach(id => {
+          document.getElementById(id).addEventListener('click', () => {
+              const op = id === 'add' ? '+' : id === 'subtract' ? '-' : '/';
+              appendToDisplay(op);
+          });
+      });
+
+      document.getElementById('decimal').addEventListener('click', () => {
+          if (!display.value.includes('.')) {
+              appendToDisplay('.');
+          }
+      });
+
+      // Números
+      document.querySelectorAll('.num-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+              appendToDisplay(btn.textContent);
+          });
+      });
+
+      // Igual = -> enviar a API
+      document.getElementById('equals').addEventListener('click', async () => {
+          const expression = display.value;
+          try {
+              const response = await fetch('/api/calculate', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ expression })
+              });
+
+              if (!response.ok) {
+                  const err = await response.json();
+                  showAlert(err.error || 'Error desconocido', 'danger');
+                  return;
+              }
+
+              const data = await response.json();
+              display.value = data.result;
+              clearAlert();
+          } catch (e) {
+              showAlert('No se pudo conectar con el servidor', 'danger');
+          }
+      });
+
+      // Alertas
+      function showAlert(message, type) {
+          alertContainer.innerHTML = `<div class="alert alert-${type}" role="alert">${message}</div>`;
+      }
+
+      function clearAlert() {
+          alertContainer.innerHTML = '';
+      }
+    </script>
+</body>
+</html>

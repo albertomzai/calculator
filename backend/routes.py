@@ -1,37 +1,41 @@
-# backend/routes.py
-
-"""Blueprint for the API routes."""
-
+import ast
 from flask import Blueprint, request, jsonify, abort
-from asteval import Interpreter
 
-api_bp = Blueprint('api', __name__)
+calc_bp = Blueprint('calc', __name__)
 
-@api_bp.route('/api/calculate', methods=['POST'])
-def calculate():
-    """Evaluate a mathematical expression sent in JSON.
+def _safe_eval(expr: str):
+    """Evaluate a mathematical expression safely using AST."""
+    allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num, ast.Constant,
+                     ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Mod,
+                     ast.USub, ast.UAdd, ast.FloorDiv)
 
-    Expects: {"expression": "5*8-3"}
-    Returns: {"result": 37} or a 400 error with message.
-    """
-    data = request.get_json(force=True, silent=False)
-    if not data or 'expression' not in data:
-        abort(400, description='Missing "expression" field')
-
-    expression = data['expression']
-    if not isinstance(expression, str):
-        abort(400, description='Expression must be a string')
-
-    # Safe evaluation using asteval
-    interpreter = Interpreter(usersyms={}, err_writer=None)
     try:
-        result = interpreter(expression)
-    except Exception as e:
-        abort(400, description=f'Invalid expression: {e}')
+        node = ast.parse(expr, mode='eval')
+    except SyntaxError as e:
+        raise ValueError('Invalid syntax') from e
 
-    if interpreter.error:
-        # Collect all error messages from asteval
-        errors = '; '.join([str(err.get_error()) for err in interpreter.error])
-        abort(400, description=f'Evaluation error: {errors}')
+    for n in ast.walk(node):
+        if not isinstance(n, allowed_nodes):
+            raise ValueError('Disallowed expression')
+
+    # Compile and evaluate
+    code = compile(node, '<string>', 'eval')
+    return eval(code, {"__builtins__": None})
+
+@calc_bp.route('/api/calculate', methods=['POST'])
+def calculate():
+    """Endpoint to evaluate a mathematical expression."""
+    data = request.get_json(silent=True)
+    if not data or 'expression' not in data:
+        return jsonify({'error': "Missing 'expression' field"}), 400
+
+    expr = data['expression']
+    if not isinstance(expr, str) or not expr.strip():
+        return jsonify({'error': "Expression must be a non-empty string"}), 400
+
+    try:
+        result = _safe_eval(expr)
+    except Exception as e:
+        return jsonify({'error': f'Invalid expression: {str(e)}'}), 400
 
     return jsonify({'result': result})

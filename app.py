@@ -1,7 +1,7 @@
-from backend import create_app
+# Entry point for local execution
 
-# Create the Flask instance that will be used by tests and external clients.
-app = create_app()
+from app_pkg import app
 
 if __name__ == '__main__':
+    # Run the Flask development server
     app.run(debug=True)

@@ -1,6 +1,7 @@
 import pytest
 
-from app import app as flask_app
+# Import the Flask app instance from the package
+from app_pkg import app as flask_app
 
 @pytest.fixture
 def client():
@@ -14,13 +15,20 @@ def test_calculate_success(client):
     assert data['result'] == 37
 
 def test_calculate_invalid_expression(client):
-    response = client.post('/api/calculate', json={'expression': '5**8'})
+    # Expression with disallowed operator (e.g., exponentiation)
+    response = client.post('/api/calculate', json={'expression': '2**3'})
     assert response.status_code == 400
+    data = response.get_json()
+    assert 'error' in data
 
 def test_calculate_missing_expression(client):
     response = client.post('/api/calculate', json={})
     assert response.status_code == 400
+    data = response.get_json()
+    assert "'expression'" in data['error']
 
-def test_calculate_non_json(client):
-    response = client.post('/api/calculate', data='not a json')
+def test_calculate_empty_expression(client):
+    response = client.post('/api/calculate', json={'expression': ''})
     assert response.status_code == 400
+    data = response.get_json()
+    assert "non-empty" in data['error']

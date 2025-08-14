@@ -1,106 +1,62 @@
-"""Routes for the calculator backend.
-
-This module defines a single Blueprint ``calc_bp`` that contains the endpoint
-POST /api/calculate. The calculation logic is implemented in a helper function
-`evaluate_expression` which safely evaluates mathematical expressions using only
-basic arithmetic operators (+, -, *, /).  The endpoint validates input JSON and
-returns either the result or an error response with status code 400.
-"""
-
 import ast
 from flask import Blueprint, request, jsonify, abort
 
-# Blueprint for calculation endpoint
-calc_bp = Blueprint('calc', __name__, url_prefix='/api')
+# Define the Blueprint for calculation endpoints
+calc_bp = Blueprint('calc_bp', __name__)
 
+def _safe_eval(expr: str):
+    """Evaluate a mathematical expression safely.
 
-def _eval(node):
-    """Recursively evaluate an AST node.
-
-    Supports only basic arithmetic operations: +, -, *, / and numeric literals.
-    Raises ValueError for any unsupported node types.
-    """
-    if isinstance(node, ast.Num):  # Python <3.8
-        return node.n
-    if isinstance(node, ast.Constant):  # Python >=3.8
-        if isinstance(node.value, (int, float)):
-            return node.value
-        raise ValueError('Unsupported constant type')
-
-    if isinstance(node, ast.BinOp):
-        left = _eval(node.left)
-        right = _eval(node.right)
-
-        if isinstance(node.op, ast.Add):
-            return left + right
-        elif isinstance(node.op, ast.Sub):
-            return left - right
-        elif isinstance(node.op, ast.Mult):
-            return left * right
-        elif isinstance(node.op, ast.Div):
-            if right == 0:
-                raise ValueError('Division by zero')
-            return left / right
-        else:
-            raise ValueError('Unsupported binary operator')
-
-    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.USub):
-        return -_eval(node.operand)
-
-    raise ValueError('Unsupported expression')
-
-
-def evaluate_expression(expr: str):
-    """Parse and safely evaluate a mathematical expression.
-
-    Parameters
-    ----------
-    expr : str
-        The arithmetic expression to evaluate.
-
-    Returns
-    -------
-    float or int
-        Result of the evaluation.
-
-    Raises
-    ------
-    ValueError
-        If the expression contains unsupported syntax or operations.
-    """
+    Supports only basic arithmetic operators: +, -, *, / and parentheses.
+    Raises ValueError if the expression contains unsupported nodes."""
     try:
-        parsed = ast.parse(expr, mode='eval')
+        node = ast.parse(expr, mode='eval')
     except SyntaxError as e:
-        raise ValueError(f'Invalid syntax: {e}')
+        raise ValueError(f'Invalid syntax: {e}') from None
 
-    if not isinstance(parsed.body, (ast.Expression, ast.BinOp, ast.UnaryOp)) and not isinstance(parsed.body, ast.Constant):
-        # Only allow a single expression
-        raise ValueError('Only simple expressions are allowed')
+    allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num, ast.Constant,
+                     ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.USub, ast.UAdd,
+                     ast.Mod, ast.FloorDiv, ast.LParen, ast.RParen)  # LParen/RParen are not real nodes but keep for clarity
 
-    return _eval(parsed.body)
+    def _check(node):
+        if isinstance(node, ast.BinOp):
+            if not isinstance(node.op, (ast.Add, ast.Sub, ast.Mult, ast.Div)):
+                raise ValueError('Unsupported operator')
+            _check(node.left)
+            _check(node.right)
+        elif isinstance(node, ast.UnaryOp):
+            if not isinstance(node.op, (ast.UAdd, ast.USub)):
+                raise ValueError('Unsupported unary operator')
+            _check(node.operand)
+        elif isinstance(node, (ast.Num, ast.Constant)):
+            # Accept numeric constants only
+            if not isinstance(getattr(node, 'n', getattr(node, 'value', None)), (int, float)):
+                raise ValueError('Only numeric literals are allowed')
+        elif isinstance(node, ast.Expression):
+            _check(node.body)
+        else:
+            raise ValueError(f'Unsupported expression element: {type(node).__name__}')
 
+    _check(node)
+
+    # Evaluate the parsed AST safely using eval with empty globals/locals
+    return eval(compile(node, '<string>', 'eval'), {}, {})
 
 @calc_bp.route('/calculate', methods=['POST'])
 def calculate():
-    """Endpoint to evaluate an arithmetic expression.
-
-    Expects JSON payload with a single key ``expression`` containing the
-string representation of the mathematical expression.  Returns JSON with key ``result``.
-"""
-
+    """Endpoint to evaluate a mathematical expression sent in JSON."""
     if not request.is_json:
-        abort(400, description='Request must be JSON')
+        return jsonify({'error': 'Request must be JSON'}), 400
 
     data = request.get_json()
+    expr = data.get('expression')
 
-    # Validate presence and type of 'expression'
-    expression = data.get('expression')
-    if expression is None or not isinstance(expression, str) or not expression.strip():
-        abort(400, description='"expression" must be a non-empty string')
+    if not isinstance(expr, str) or not expr.strip():
+        return jsonify({'error': "'expression' must be a non-empty string"}), 400
 
     try:
-        result = evaluate_expression(expression)
-    except ValueError as e:
-        abort(400, description=str(e))
+        result = _safe_eval(expr)
+    except Exception as e:
+        return jsonify({'error': f'Invalid expression: {str(e)}'}), 400
 
     return jsonify({'result': result})

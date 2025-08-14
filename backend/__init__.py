@@ -1,17 +1,20 @@
-from flask import Flask, jsonify, request
+"""Backend package for the calculator application."""
 
-# Create the application factory
+from flask import Flask, send_from_directory, Blueprint, request, jsonify
+
+# Blueprint for calculation endpoint
+calc_bp = Blueprint('calc', __name__, url_prefix='/api')
+
 def create_app():
-    """Create and configure a Flask application instance."""
+    """Application factory that creates and configures the Flask app."""
     app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
-    # Register blueprints
-    from .routes import calc_bp
+    # Register blueprint
     app.register_blueprint(calc_bp)
 
-    # Serve the main page at root
     @app.route('/')
     def index():
-        return app.send_static_file('index.html')
+        """Serve the frontend entry point."""
+        return send_from_directory(app.static_folder, 'index.html')
 
     return app

@@ -1,41 +1,56 @@
-from flask import Blueprint, request, jsonify
+"""Routes for the calculator backend."""
+
 import ast
+from flask import request, jsonify, current_app
+from . import calc_bp
 
-calc_bp = Blueprint('calc', __name__)
+# Allowed operators mapping for safe evaluation
+_OPERATORS = {
+    ast.Add: lambda a, b: a + b,
+    ast.Sub: lambda a, b: a - b,
+    ast.Mult: lambda a, b: a * b,
+    ast.Div: lambda a, b: a / b,
+}
 
-# Utility to safely evaluate arithmetic expressions
-def safe_eval(expr: str):
-    """Evaluate a simple arithmetic expression containing only +, -, *, / operators."""
-    try:
-        node = ast.parse(expr, mode='eval')
-    except SyntaxError as e:
-        raise ValueError(f'Invalid syntax: {e}')
+def _eval(node):
+    """Recursively evaluate an AST node safely."""
+    if isinstance(node, ast.Num):  # <number> (Python <3.8)
+        return node.n
+    elif hasattr(ast, 'Constant') and isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+        return node.value
+    elif isinstance(node, ast.BinOp):
+        left = _eval(node.left)
+        right = _eval(node.right)
+        op_type = type(node.op)
+        if op_type in _OPERATORS:
+            try:
+                return _OPERATORS[op_type](left, right)
+            except ZeroDivisionError:
+                raise ValueError('division by zero')
+        else:
+            raise ValueError(f'Unsupported operator: {op_type}')
+    else:
+        raise ValueError(f'Unsupported expression component: {type(node)}')
 
-    allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num, ast.Constant)
-    allowed_ops = (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.USub)
-
-    for subnode in ast.walk(node):
-        if not isinstance(subnode, allowed_nodes):
-            raise ValueError('Disallowed expression')
-        if isinstance(subnode, ast.BinOp) and not isinstance(subnode.op, allowed_ops):
-            raise ValueError('Unsupported operator')
-        if isinstance(subnode, ast.UnaryOp) and not isinstance(subnode.op, allowed_ops):
-            raise ValueError('Unsupported unary operator')
-
-    # Evaluate the expression safely
-    return eval(compile(node, '<string>', 'eval'))
-
-@calc_bp.route('/api/calculate', methods=['POST'])
+@calc_bp.route('/calculate', methods=['POST'])
 def calculate():
-    data = request.get_json() or {}
-    expression = data.get('expression')
+    """Endpoint that evaluates a mathematical expression sent in JSON."""
+    if not request.is_json:
+        return jsonify(error='Request must be JSON'), 400
 
-    if not isinstance(expression, str) or not expression.strip():
-        return jsonify({'error': 'Expression must be a non-empty string'}), 400
+    data = request.get_json()
+
+    # Validate presence and type of 'expression'
+    expr = data.get('expression')
+    if expr is None or not isinstance(expr, str) or expr.strip() == '':
+        return jsonify(error="'expression' must be a non-empty string"), 400
 
     try:
-        result = safe_eval(expression)
+        # Parse expression into AST
+        tree = ast.parse(expr, mode='eval')
+        result = _eval(tree.body)
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        current_app.logger.debug(f'Expression evaluation error: {e}')
+        return jsonify(error=f'Invalid expression: {str(e)}'), 400
 
-    return jsonify({'result': result})
+    return jsonify(result=result)

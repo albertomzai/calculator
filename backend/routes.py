@@ -1,32 +1,51 @@
+import json
 from flask import Blueprint, request, jsonify
 from asteval import Interpreter
 
+# Blueprint for the calculator API
 api_bp = Blueprint('api', __name__)
 
-# Configure a safe evaluator that only allows basic arithmetic
-_ae = Interpreter(usersyms={}, err_writer=None, use_numpy=False)
+
+def _safe_eval(expression: str) -> float:
+    """Evaluate a mathematical expression safely.
+
+    Uses ``asteval`` to parse and evaluate arithmetic expressions while
+    preventing execution of arbitrary code. Only the standard Python math
+    operators are allowed.
+    """
+    ae = Interpreter(usersyms={}, err_writer=None)
+    try:
+        result = ae(expression)
+    except Exception as exc:
+        raise ValueError(f"Invalid expression: {exc}") from None
+
+    if ae.error:
+        # ``asteval`` collects errors in the ``error`` list
+        err_msg = '; '.join(str(e) for e in ae.error)
+        raise ValueError(f"Expression error: {err_msg}")
+
+    return result
+
 
 @api_bp.route('/api/calculate', methods=['POST'])
 def calculate():
-    """Endpoint to evaluate a mathematical expression sent in JSON."""
-    data = request.get_json(silent=True) or {}
+    """Endpoint that receives a JSON payload with an ``expression`` key.
 
-    if 'expression' not in data:
-        return jsonify({'error': "Missing 'expression' field"}), 400
+    The expression is evaluated safely and the numeric result is returned
+    as JSON. If the input is missing or invalid, a 400 error is raised.
+    """
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON."}), 400
 
-    expr = data['expression']
+    data = request.get_json()
 
-    if not isinstance(expr, str):
-        return jsonify({'error': "Expression must be a string"}), 400
+    expression = data.get('expression')
+    if not isinstance(expression, str):
+        return jsonify({"error": "'expression' must be a string."}), 400
 
     try:
-        # Use asteval to safely evaluate the expression
-        result = _ae(expr)
+        result = _safe_eval(expression)
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
 
-        if _ae.error:
-            raise ValueError('Invalid expression')
-
-        return jsonify({'result': result})
-    except Exception as e:
-        # Return a 400 for any evaluation error
-        return jsonify({'error': str(e)}), 400
+    return jsonify({"result": result})

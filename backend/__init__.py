@@ -1,25 +1,32 @@
-from flask import Flask, jsonify, request
+from flask import Flask, send_from_directory
 
-# Blueprint will be imported lazily to avoid circular imports
+# Blueprint for API routes
+from .routes import api_bp
+
+__all__ = ['create_app']
+
+
 def create_app():
-    """Create and configure a Flask application instance."""
+    """Factory function that creates and configures the Flask app.
+
+    The application serves static files from the ``frontend`` directory
+    (the index.html of the calculator) and registers the API blueprint.
+    """
     app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
-    # Register API blueprint
-    from .routes import api_bp
+    # Register the API blueprint
     app.register_blueprint(api_bp)
 
-    # Global error handlers
-    @app.errorhandler(400)
-    def bad_request(error):
-        response = jsonify({'error': str(error.description)})
-        response.status_code = 400
-        return response
+    @app.route('/')
+    def serve_index():
+        """Serve the calculator frontend."""
+        return send_from_directory(app.static_folder, 'index.html')
 
-    @app.errorhandler(500)
-    def internal_error(error):
-        response = jsonify({'error': 'Internal Server Error'})
-        response.status_code = 500
-        return response
+    # Global error handler for unhandled exceptions in the API
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        """Return JSON error responses for unexpected server errors."""
+        response = {"error": str(e)}
+        return response, 500
 
     return app

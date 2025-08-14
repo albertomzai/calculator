@@ -1,67 +1,22 @@
-"""Package initialization for the backend.
-
-
-
-This module creates and configures the Flask application instance.
-
-It also registers blueprints and sets up a route to serve the
-
-frontend index.html from the static folder.
-
-"""
-
+import os
 
 from flask import Flask, send_from_directory
 
-import os
+def create_app():
+    """Create and configure a Flask application instance."""
 
+    # Determine the absolute path to the frontend directory
+    frontend_path = os.path.join(os.path.dirname(__file__), '..', 'frontend')
 
-def create_app() -> Flask:
+    app = Flask(__name__, static_folder=frontend_path, static_url_path='')
 
-    """Factory function that creates and configures a Flask app.
+    # Register blueprints and routes
+    from .routes import api_bp
+    app.register_blueprint(api_bp)
 
-
-
-    Returns
-
-    -------
-
-    flask.Flask
-
-        The configured Flask application instance.
-
-"""
-
-
-    # The static folder is located one level above this package in the
-        # ``frontend`` directory.
-        app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), "..", "frontend"), static_url_path="")
-
-
-    from .routes import calc_bp
-
-    app.register_blueprint(calc_bp)
-
-
-    @app.route("/")
-
+    @app.route('/')
     def serve_index():
-
-        """Serve the main frontend page.
-
-
-
-        Returns
-
-        -------
-
-        flask.Response
-
-            The rendered index.html file.
-
-"""
-
-        return send_from_directory(app.static_folder, "index.html")
-
+        """Serve the main index.html file for the SPA."""
+        return send_from_directory(app.static_folder, 'index.html')
 
     return app

@@ -1,0 +1,42 @@
+{
+  "api_contract": {
+    "ruta": "/api/calculate",
+    "metodo": "POST",
+    "descripcion": "Evalúa una expresión matemática recibida como string y devuelve el resultado.",
+    "parametros_entrada": {
+      "expression": "string"
+    },
+    "respuesta_esperada": {
+      "result": "number"
+    }
+  },
+  "plan": [
+    {
+      "etapa": "backend",
+      "tareas": [
+        "Inicializar un proyecto Flask con la estructura de directorios base.",
+        "Crear el paquete `backend/` y definir la factory `create_app` en `__init__.py`.",
+        "Configurar la aplicación para servir archivos estáticos desde `../frontend`.",
+        "Definir un Blueprint en `routes.py` que exponga el endpoint POST '/api/calculate'.",
+        "Implementar la lógica de evaluación segura de expresiones matemáticas usando una librería estándar o expresión evaluada con restricciones.",
+        "Validar que la entrada sea una cadena no vacía y manejar excepciones devolviendo códigos HTTP adecuados.",
+        "Formatear la respuesta en JSON con la clave `result`.",
+        "Crear el fichero `requirements.txt` listando 'Flask'.",
+        "Añadir un archivo `app.py` que importe `create_app` y arranque la app.",
+        "Incluir un directorio `tests/` con pruebas unitarias para el endpoint usando `pytest` y el test client de Flask."
+      ]
+    },
+    {
+      "etapa": "frontend",
+      "tareas": [
+        "Crear el archivo `frontend/index.html` con una estructura básica de calculadora.",
+        "Diseñar la pantalla de entrada/resultado utilizando CSS Grid/Flexbox.",
+        "Agregar botones numéricos 0‑9, operadores +, -, *, /, punto decimal, igual y borrar.",
+        "Implementar JavaScript inline para manejar los clics de los botones y construir la expresión matemática en el visor.",
+        "Al pulsar '=', enviar la expresión al endpoint '/api/calculate' mediante fetch POST con JSON payload.",
+        "Mostrar el valor recibido bajo `result` en la pantalla de la calculadora.",
+        "Incluir manejo de errores para mostrar mensajes amigables cuando la API falle."
+      ]
+    }
+  ]
+}

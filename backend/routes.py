@@ -1,65 +1,56 @@
+"""Rutas y lógica de cálculo para el backend."""
+
 import ast
+from flask import Blueprint, request, jsonify, current_app
 
-from flask import Blueprint, request, jsonify, abort
-
-# Blueprint for calculator endpoints
 calc_bp = Blueprint('calc', __name__)
 
-def _safe_eval(expr: str) -> float:
-    """Evaluate a mathematical expression safely.
+def _safe_eval(expr: str):
+    """Evalúa de forma segura una expresión aritmética básica.
 
-    Supports only +, -, *, / and parentheses."""
+    Se permite únicamente números, operadores + - * / y paréntesis.
+    """
+    # Validar que la cadena contenga solo caracteres permitidos
+    allowed_chars = set("0123456789+-*/(). ")
+    if not set(expr).issubset(allowed_chars):
+        raise ValueError('Expression contains invalid characters')
+
     try:
+        # Parsear la expresión con ast para evitar eval inseguro
         node = ast.parse(expr, mode='eval')
-    except SyntaxError:
-        raise ValueError('Invalid syntax')
-
-    allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp,
-                     ast.Num, ast.Constant, ast.Add, ast.Sub,
-                     ast.Mult, ast.Div, ast.Pow, ast.USub,
-                     ast.UAdd, ast.Load, ast.Tuple, ast.List,
-                     ast.Name, ast.Call)
-
-    for n in ast.walk(node):
-        if not isinstance(n, allowed_nodes):
-            raise ValueError('Disallowed expression')
-
-    # Only allow numeric constants and arithmetic ops
-    try:
-        result = eval(compile(node, '<string>', 'eval'), {"__builtins__": None}, {})
+        for n in ast.walk(node):
+            if isinstance(n, (ast.BinOp, ast.UnaryOp, ast.Num, ast.Expression, ast.Load, ast.Expr, ast.Constant, ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.Mod, ast.UAdd, ast.USub)):
+                continue
+            if isinstance(n, ast.Call):
+                raise ValueError('Function calls not allowed')
+            # Permitir sólo nodos aritméticos básicos
+            if not isinstance(n, (ast.BinOp, ast.UnaryOp, ast.Num, ast.Expression, ast.Load, ast.Expr, ast.Constant)):
+                raise ValueError('Unsupported operation in expression')
     except Exception as e:
-        raise ValueError('Evaluation error') from e
+        raise ValueError(f'Invalid expression: {e}')
+
+    # Evaluar de forma segura con un entorno vacío
+    try:
+        result = eval(compile(node, '<string>', 'eval'), {'__builtins__': None}, {})
+    except Exception as e:
+        raise ValueError(f'Error evaluating expression: {e}')
 
     return result
 
 @calc_bp.route('/api/calculate', methods=['POST'])
 def calculate():
-    if not request.is_json:
-        abort(400, description='Request must be JSON')
+    data = request.get_json(silent=True)
+    if not data or 'expression' not in data:
+        return jsonify({'error': "Missing 'expression' key"}), 400
 
-    data = request.get_json()
-    expression = data.get('expression')
-
-    if not isinstance(expression, str) or not expression.strip():
-        abort(400, description="'expression' must be a non‑empty string")
+    expr = data['expression']
+    if not isinstance(expr, str) or not expr.strip():
+        return jsonify({'error': 'Expression must be a non-empty string'}), 400
 
     try:
-        result = _safe_eval(expression)
+        result = _safe_eval(expr)
     except ValueError as e:
-        abort(400, description=str(e))
+        current_app.logger.debug(f'Calculation error: {e}')
+        return jsonify({'error': str(e)}), 400
 
     return jsonify({'result': result})
-
-def create_app():
-    from flask import Flask
-
-    app = Flask(__name__, static_folder='../frontend', static_url_path='')
-
-    # Register blueprints
-    app.register_blueprint(calc_bp)
-
-    @app.route('/')
-    def index():
-        return app.send_static_file('index.html')
-
-    return app

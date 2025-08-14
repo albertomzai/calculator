@@ -1,7 +1,6 @@
-import os
-from backend.app import app
+from backend import create_app
+
+app = create_app()
 
 if __name__ == '__main__':
-    # Use environment variable to set port if needed
-    port = int(os.getenv('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(debug=True)

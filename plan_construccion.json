@@ -1,0 +1,50 @@
+{
+  "api_contract": {
+    "ruta": "/api/calculate",
+    "metodo": "POST",
+    "descripcion": "Endpoint para evaluar una expresión matemática segura.",
+    "parametros_entrada": {
+      "expression": "string"
+    },
+    "respuesta_esperada": {
+      "result": "number"
+    }
+  },
+  "plan": [
+    {
+      "etapa": "backend",
+      "tareas": [
+        "Inicializar un proyecto Flask con una estructura de directorios básica para el backend.",
+        "Crear la aplicación factory `create_app` en el paquete `backend/__init__.py` que configure Flask y sirva archivos estáticos desde '../frontend'.",
+        "Definir un Blueprint llamado `calc_bp` en `backend/routes.py` con el endpoint POST '/api/calculate' que reciba JSON {\"expression\": \"...\"}.",
+        "Implementar una función de evaluación segura (por ejemplo, usando `asteval` o una lógica propia) para procesar la expresión y devolver un número.",
+        "Añadir validación del cuerpo de la solicitud para asegurar que el campo 'expression' es una cadena no vacía.",
+        "Gestionar excepciones y devolver errores HTTP 400 con mensajes claros cuando la expresión sea inválida.",
+        "Crear `requirements.txt` incluyendo 'Flask'.",
+        "Generar un fichero `app.py` en la raíz que importe `create_app` desde el paquete `backend` y ejecute la aplicación.",
+        "Configurar un entorno de pruebas unitarias con Pytest, creando una carpeta `tests/` y un archivo `test_backend.py` que verifique el correcto funcionamiento del endpoint `/api/calculate`.",
+        "Añadir un script de linting (p.ej., `flake8`) en `setup.cfg` para garantizar calidad de código.",
+        "Documentar la API RESTful en una sección breve dentro del README, incluyendo ejemplos de petición y respuesta."
+      ]
+    },
+    {
+      "etapa": "frontend",
+      "tareas": [
+        "Crear el archivo único `frontend/index.html` con la estructura básica de una calculadora: pantalla de entrada/resultado y botones numéricos, operadores, igual, borrar y decimal.",
+        "Estilizar la interfaz usando CSS Grid o Flexbox dentro de un bloque `<style>` en el mismo HTML para mantenerla autocontenida.",
+        "Incorporar JavaScript inline dentro del `<script>` que construya la expresión al pulsar los botones y actualice la pantalla.",
+        "Implementar la lógica para enviar la expresión a `POST /api/calculate` mediante fetch cuando se pulse el botón igual.",
+        "Mostrar el resultado devuelto por la API en la pantalla de la calculadora.",
+        "Añadir manejo básico de errores (p.ej., mostrar un mensaje de error si la respuesta no es 200)."
+      ]
+    },
+    {
+      "etapa": "e2e",
+      "tareas": [
+        "Crear una carpeta `cypress/e2e/` y dentro un archivo `calculator.cy.js` que inicie el navegador, visite `/`, simule pulsaciones de botones para la expresión '12+7', haga clic en igual y verifique que la pantalla muestra '19'.",
+        "Configurar los scripts de Cypress en `package.json` para ejecutar las pruebas E2E.",
+        "Agregar un archivo `.cypress.json` con la configuración básica (por ejemplo, baseUrl apuntando a http://localhost:5000)."
+      ]
+    }
+  ]
+}

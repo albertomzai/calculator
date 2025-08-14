@@ -1,3 +1,7 @@
+# Dependencies required for the project
+
 Flask
 simpleeval
+
+# Test dependencies
 pytest

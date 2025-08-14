@@ -1,3 +1,6 @@
-# Use a relative import to avoid circular dependencies and ensure the backend package is correctly referenced.
+# app_pkg.__init__
 
-from .backend import create_app
+# Import the backend factory without causing circular imports.
+from .backend import create_app as _create_app
+
+__all__ = ['_create_app']

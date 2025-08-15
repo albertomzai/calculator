@@ -1,60 +1,70 @@
-"""Routes for the calculator API."""
+"""Blueprint that defines the calculator API."""
 
-import ast
+import re
 from flask import Blueprint, request, jsonify, abort
 
-__all__ = ["api_bp"]
 
-# Blueprint definition
-api_bp = Blueprint('api', __name__, url_prefix='/api')
+api_bp = Blueprint("api", __name__)
 
-def _safe_eval(expr: str):
-    """Evaluate a mathematical expression safely.
 
-    Only numeric literals and the operators +, -, *, / are allowed.
-    Parameters:
-        expr (str): The expression string to evaluate.
-    Returns:
-        float: Result of the evaluated expression.
-    Raises:
-        ValueError: If the expression contains disallowed nodes.
+_SAFE_EXPR_REGEX = re.compile(r"^[0-9+\-*/().\s]+$")
+
+
+def _evaluate_expression(expr: str) -> float:
+    """Safely evaluate a mathematical expression.
+
+    The function only allows digits, decimal points and the four basic
+    arithmetic operators.  It uses :func:`eval` with an empty globals
+    dictionary to avoid access to built‑ins.
+
+    Parameters
+    ----------
+    expr:
+        String containing the mathematical expression.
+
+    Returns
+    -------
+    float
+        Result of evaluating ``expr``.
+
+    Raises
+    ------
+    ValueError
+        If the expression contains disallowed characters or if evaluation
+        fails for any reason.
     """
-    try:
-        node = ast.parse(expr, mode='eval')
-    except SyntaxError as e:
-        raise ValueError("Invalid syntax") from e
-
-    allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num, ast.Constant, ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.USub)
-
-    for subnode in ast.walk(node):
-        if not isinstance(subnode, allowed_nodes):
-            raise ValueError("Disallowed expression")
+    if not _SAFE_EXPR_REGEX.match(expr):
+        raise ValueError("Expression contains unsafe characters")
 
     try:
-        result = eval(compile(node, '<string>', 'eval'), {}, {})
-    except ZeroDivisionError as e:
-        raise ValueError("Division by zero") from e
-    return result
+        # ``eval`` is safe here because the regex guarantees only allowed chars.
+        result = eval(expr, {"__builtins__": None}, {})
+    except Exception as exc:
+        raise ValueError(f"Failed to evaluate expression: {exc}")
 
-@api_bp.route('/calculate', methods=['POST'])
+    return float(result)
+
+
+@api_bp.route("/calculate", methods=["POST"])
 def calculate():
-    """Endpoint to evaluate a mathematical expression.
+    """Endpoint that receives a JSON payload with an ``expression`` key.
 
-    Expects JSON payload: {"expression": "5*8-3"}
-    Returns:
-        JSON with key 'result' containing the numeric result.
+    The expression is evaluated safely and the result returned as JSON.
+    Errors in parsing or evaluation return HTTP 400.
     """
-    data = request.get_json(silent=True)
-    if not data or 'expression' not in data:
-        abort(400, description="Missing 'expression' field")
 
-    expr = data['expression']
-    if not isinstance(expr, str) or not expr.strip():
-        abort(400, description="Expression must be a non-empty string")
+    if not request.is_json:
+        abort(400, description="Request must be JSON")
+
+    data = request.get_json()
+    expression = data.get("expression")
+
+    if not isinstance(expression, str):
+        abort(400, description="'expression' must be a string")
 
     try:
-        result = _safe_eval(expr)
-    except ValueError as e:
-        abort(400, description=str(e))
+        result = _evaluate_expression(expression)
+    except ValueError as exc:
+        abort(400, description=str(exc))
 
     return jsonify({"result": result})

@@ -1,0 +1,70 @@
+{
+  "api_contract": {
+    "ruta": "/api/calculate",
+    "metodo": "POST",
+    "descripcion": "Endpoint que recibe una expresión matemática como string y devuelve el resultado calculado.",
+    "parametros_entrada": {
+      "expression": "string"
+    },
+    "respuesta_esperada": {
+      "result": "number"
+    }
+  },
+  "contrato_qa_e2e": {
+    "pantalla_display": "display",
+    "boton_numero_0": "btn-0",
+    "boton_numero_1": "btn-1",
+    "boton_numero_2": "btn-2",
+    "boton_numero_3": "btn-3",
+    "boton_numero_4": "btn-4",
+    "boton_numero_5": "btn-5",
+    "boton_numero_6": "btn-6",
+    "boton_numero_7": "btn-7",
+    "boton_numero_8": "btn-8",
+    "boton_numero_9": "btn-9",
+    "boton_operador_suma": "btn-plus",
+    "boton_operador_resta": "btn-minus",
+    "boton_operador_multiplicacion": "btn-multiply",
+    "boton_operador_division": "btn-divide",
+    "boton_punto_decimal": "btn-decimal",
+    "boton_borrar": "btn-clear",
+    "boton_igual": "btn-equals"
+  },
+  "plan": [
+    {
+      "etapa": "backend",
+      "tareas": [
+        "Crear el fichero `requirements.txt` con la dependencia 'Flask'.",
+        "Crear el fichero `pytest.ini` con configuración mínima para pruebas.",
+        "Crear el fichero `app.py` que importe y ejecute la aplicación Flask desde el paquete 'backend'.",
+        "En el paquete raíz, crear una carpeta `backend/` con un archivo `__init__.py` que defina la factory `create_app`. ",
+        "Dentro de `backend/__init__.py`, configurar la instancia Flask para servir archivos estáticos desde '../frontend'.",
+        "Crear en `backend/` un módulo `routes.py` que registre un Blueprint y defina el endpoint POST '/api/calculate'.",
+        "Implementar en `routes.py` la lógica para recibir JSON con la clave 'expression', evaluar de forma segura la expresión matemática y devolver JSON con la clave 'result'.",
+        "Agregar manejo de errores HTTP 400 cuando la expresión sea inválida o la evaluación falle.",
+        "Incluir la importación del Blueprint en el factory `create_app`.",
+        "Crear carpeta `tests/` con un archivo `test_backend.py` que utilice el test client de Flask para validar los casos de éxito y error del endpoint."
+      ]
+    },
+    {
+      "etapa": "frontend",
+      "tareas": [
+        "Crear el fichero `frontend/index.html` como una SPA con estructura básica.",
+        "Añadir un elemento visual de pantalla con id 'display' y atributo `data-testid='display'`.",
+        "Definir botones numéricos 0‑9, operadores (+, –, *, /), punto decimal, borrar (C) y igual (=), cada uno con su respectivo `data-testid` según el contrato_qa_e2e.",
+        "Incorporar estilos CSS internos para lograr una apariencia de calculadora clásica usando Grid o Flexbox.",
+        "Añadir un bloque `<script>` interno que gestione los clics de los botones, construya la expresión en tiempo real y actualice el contenido del display.",
+        "Implementar la función que envía la expresión al endpoint '/api/calculate' vía fetch POST con encabezado 'Content-Type: application/json'.",
+        "Actualizar el display con el valor devuelto por la API o mostrar un mensaje de error si la respuesta falla."
+      ]
+    },
+    {
+      "etapa": "e2e",
+      "tareas": [
+        "Crear una carpeta `cypress/e2e/` y dentro un archivo `calculator.cy.js`. ",
+        "En el test, visitar la ruta raíz '/', simular pulsaciones de botones para formar la expresión '12+7', pulsar '=' y verificar que el display muestra '19'.",
+        "Incluir pruebas adicionales para casos con operadores mixtos y manejo de error cuando se envía una expresión inválida."
+      ]
+    }
+  ]
+}

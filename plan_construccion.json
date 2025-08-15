@@ -1,1 +1,70 @@
-{\n  \"api_contract\": {\n    \"ruta\": \"/api/calculate\",\n    \"metodo\": \"POST\",\n    \"descripcion\": \"Calcula una expresión matemática recibida como cadena.\",\n    \"parametros_entrada\": {\"expresion\": \"string\"},\n    \"respuesta_esperada\": {\"result\": \"number\"}\n  },\n  \"contrato_qa_e2e\": {\n    \"display\": \"display\",\n    \"btn-0\": \"btn-0\",\n    \"btn-1\": \"btn-1\",\n    \"btn-2\": \"btn-2\",\n    \"btn-3\": \"btn-3\",\n    \"btn-4\": \"btn-4\",\n    \"btn-5\": \"btn-5\",\n    \"btn-6\": \"btn-6\",\n    \"btn-7\": \"btn-7\",\n    \"btn-8\": \"btn-8\",\n    \"btn-9\": \"btn-9\",\n    \"btn-plus\": \"btn-plus\",\n    \"btn-minus\": \"btn-minus\",\n    \"btn-multiply\": \"btn-multiply\",\n    \"btn-divide\": \"btn-divide\",\n    \"btn-equals\": \"btn-equals\",\n    \"btn-clear\": \"btn-clear\",\n    \"btn-decimal\": \"btn-decimal\"\n  },\n  \"plan\": [\n    {\n      \"etapa\": \"backend\",\n      \"tareas\": [\n        \"Inicializar proyecto Flask con estructura básica.",\n        \"Crear factory `create_app` en backend/__init__.py.",\n        \"Definir Blueprint para '/api/calculate' en routes.py.",\n        \"Implementar endpoint POST que reciba JSON {expresion: string}.\",\n        \"Evaluar expresión de forma segura usando módulo ast y evaluador seguro.\",\n        \"Devolver JSON con clave result y valor numérico.\",\n        \"Agregar manejo de errores y validación del formato de entrada.\",\n        \"Crear requirements.txt con Flask.\",\n        \"Configurar archivo app.py para ejecutar la aplicación.\"\n      ]\n    },\n    {\n      \"etapa\": \"frontend\",\n      \"tareas\": [\n        \"Crear index.html con estructura de calculadora usando CSS Grid.",\n        \"Añadir elemento display con data-testid 'display'.\",\n        \"Agregar botones numéricos 0-9, operadores + - * /, =, C y . con data-testid correspondientes.\",\n        \"Implementar script inline que construya expresión en el display al hacer clic.\",\n        \"Al pulsar '=', enviar POST a '/api/calculate' con JSON {expresion}.\",\n        \"Mostrar resultado devuelto en el display.\"\n      ]\n    },\n    {\n      \"etapa\": \"e2e\",\n      \"tareas\": [\n        \"Crear prueba Cypress que visite index.html, ingrese '5+3', presione '=', y verifique que el display muestra '8'.\"\n      ]\n    }\n  ]\n}
+{
+  "api_contract": {
+    "ruta": "/api/calculate",
+    "metodo": "POST",
+    "descripcion": "Endpoint para evaluar una expresión matemática segura.",
+    "parametros_entrada": {
+      "expression": "string"
+    },
+    "respuesta_esperada": {
+      "result": "number"
+    }
+  },
+  "contrato_qa_e2e": {
+    "pantalla_input": "display-input",
+    "boton_numero_0": "btn-0",
+    "boton_numero_1": "btn-1",
+    "boton_numero_2": "btn-2",
+    "boton_numero_3": "btn-3",
+    "boton_numero_4": "btn-4",
+    "boton_numero_5": "btn-5",
+    "boton_numero_6": "btn-6",
+    "boton_numero_7": "btn-7",
+    "boton_numero_8": "btn-8",
+    "boton_numero_9": "btn-9",
+    "boton_operador_suma": "btn-plus",
+    "boton_operador_resta": "btn-minus",
+    "boton_operador_multiplicacion": "btn-multiply",
+    "boton_operador_division": "btn-divide",
+    "boton_punto_decimal": "btn-decimal",
+    "boton_igual": "btn-equals",
+    "boton_borrar": "btn-clear"
+  },
+  "plan": [
+    {
+      "etapa": "backend",
+      "tareas": [
+        "Inicializar un proyecto Flask con la estructura de directorios base para el backend.",
+        "Crear un paquete `backend/` con un archivo `__init__.py` que exponga una factory `create_app`.",
+        "Definir en `backend/routes.py` un Blueprint que maneje POST '/api/calculate'.",
+        "Implementar la lógica de evaluación segura de la expresión recibida, utilizando `ast.parse` y un evaluador limitado.",
+        "Validar el cuerpo JSON para asegurar que contiene una clave 'expression' con tipo string.",
+        "Devolver en formato JSON la respuesta con la clave 'result' y el valor numérico calculado.",
+        "Añadir manejo de excepciones para expresiones inválidas, retornando código 400 con mensaje descriptivo.",
+        "Crear `requirements.txt` listando Flask y pytest.",
+        "Configurar un archivo `pytest.ini` con `[pytest]\npythonpath = .`.",
+        "Agregar tests unitarios en `tests/test_backend.py` que verifiquen la correcta evaluación de expresiones y el manejo de errores."
+      ]
+    },
+    {
+      "etapa": "frontend",
+      "tareas": [
+        "Crear un archivo único `frontend/index.html` con la estructura básica de una calculadora.",
+        "Incluir en el HTML un elemento visual para mostrar la expresión actual y el resultado, usando los data-testid definidos.",
+        "Agregar botones numerales, operadores, punto decimal, igual y borrar, cada uno con su respectivo atributo `data-testid`.",
+        "Escribir JavaScript inline que construya la expresión a medida que se presionan los botones y la muestre en pantalla.",
+        "Implementar una función que envíe la expresión completa al endpoint '/api/calculate' mediante fetch POST cuando se pulsa el botón igual.",
+        "Actualizar la pantalla con el resultado recibido de la API o mostrar un mensaje de error si la respuesta es 400."
+      ]
+    },
+    {
+      "etapa": "e2e",
+      "tareas": [
+        "Crear un fichero `cypress/e2e/calculator.cy.js` que abra la página principal.",
+        "Simular una secuencia de pulsaciones (por ejemplo, '5', '*', '8', '-', '3', '=') usando los data-testid del contrato e2e.",
+        "Verificar que el resultado mostrado en la pantalla coincide con el valor esperado (37).",
+        "Agregar pruebas para casos de error, como expresión inválida y verificar el mensaje de error."
+      ]
+    }
+  ]
+}

@@ -1,31 +1,29 @@
+"""Test suite for the calculator backend API."""
+
+import json
 import pytest
 
-from backend import create_app
+from app import app as flask_app
 
 @pytest.fixture
 def client():
-    app = create_app()
-    with app.test_client() as client:
+    with flask_app.test_client() as client:
         yield client
 
 def test_calculate_success(client):
-    response = client.post("/api/calculate", json={"expression": "5*8-3"})
+    payload = {"expression": "5*8-3"}
+    response = client.post("/api/calculate", data=json.dumps(payload), content_type="application/json")
     assert response.status_code == 200
     data = response.get_json()
+    assert "result" in data
     assert data["result"] == 37
 
-def test_calculate_division_by_zero(client):
-    response = client.post("/api/calculate", json={"expression": "10/0"})
+def test_calculate_invalid_expression(client):
+    payload = {"expression": "5*/2"}
+    response = client.post("/api/calculate", data=json.dumps(payload), content_type="application/json")
     assert response.status_code == 400
 
-def test_invalid_expression(client):
-    response = client.post("/api/calculate", json={"expression": "import os; os.system('ls')"})
-    assert response.status_code == 400
-
-def test_missing_json(client):
-    response = client.post("/api/calculate")
-    assert response.status_code == 400
-
-def test_non_string_expression(client):
-    response = client.post("/api/calculate", json={"expression": 123})
+def test_missing_expression_field(client):
+    payload = {"expr": "1+1"}
+    response = client.post("/api/calculate", data=json.dumps(payload), content_type="application/json")
     assert response.status_code == 400

@@ -1,58 +1,60 @@
-"""Blueprint that exposes the calculation API endpoint."""
+"""Routes for the calculator API."""
 
 import ast
 from flask import Blueprint, request, jsonify, abort
 
-api_bp = Blueprint("api", __name__, url_prefix="/api")
+__all__ = ["api_bp"]
 
-def _evaluate_expression(expr: str):
-    """Safely evaluate a mathematical expression.
+# Blueprint definition
+api_bp = Blueprint('api', __name__, url_prefix='/api')
 
-    Only numeric literals and the operators + - * / are allowed. The
-    evaluation is performed using Python's AST module to prevent execution of
-    arbitrary code.
+def _safe_eval(expr: str):
+    """Evaluate a mathematical expression safely.
+
+    Only numeric literals and the operators +, -, *, / are allowed.
+    Parameters:
+        expr (str): The expression string to evaluate.
+    Returns:
+        float: Result of the evaluated expression.
+    Raises:
+        ValueError: If the expression contains disallowed nodes.
     """
     try:
-        node = ast.parse(expr, mode="eval")
-    except SyntaxError as exc:
-        raise ValueError("Invalid syntax") from exc
+        node = ast.parse(expr, mode='eval')
+    except SyntaxError as e:
+        raise ValueError("Invalid syntax") from e
 
-    allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num,
-                     ast.Constant, ast.Add, ast.Sub, ast.Mult, ast.Div,
-                     ast.UAdd, ast.USub)
+    allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num, ast.Constant, ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.USub)
 
-    for n in ast.walk(node):
-        if not isinstance(n, allowed_nodes):
+    for subnode in ast.walk(node):
+        if not isinstance(subnode, allowed_nodes):
             raise ValueError("Disallowed expression")
 
-    # Evaluate the AST safely using eval with an empty namespace
     try:
-        result = eval(compile(node, filename="<expr>", mode="eval"), {}, {})
-    except ZeroDivisionError as exc:
-        raise ValueError("Division by zero") from exc
-
+        result = eval(compile(node, '<string>', 'eval'), {}, {})
+    except ZeroDivisionError as e:
+        raise ValueError("Division by zero") from e
     return result
 
-@api_bp.route("/calculate", methods=["POST"])
+@api_bp.route('/calculate', methods=['POST'])
 def calculate():
-    """Endpoint that receives a JSON payload with an 'expression' key.
+    """Endpoint to evaluate a mathematical expression.
 
-    Returns the evaluated numeric result in JSON format. If the request is
- malformed or the expression cannot be safely evaluated, a 400 error is
- returned with an explanatory message.
+    Expects JSON payload: {"expression": "5*8-3"}
+    Returns:
+        JSON with key 'result' containing the numeric result.
     """
-    if not request.is_json:
-        abort(400, description="Request must be JSON")
+    data = request.get_json(silent=True)
+    if not data or 'expression' not in data:
+        abort(400, description="Missing 'expression' field")
 
-    data = request.get_json()
-    expression = data.get("expression")
-
-    if not isinstance(expression, str):
-        abort(400, description="'expression' must be a string")
+    expr = data['expression']
+    if not isinstance(expr, str) or not expr.strip():
+        abort(400, description="Expression must be a non-empty string")
 
     try:
-        result = _evaluate_expression(expression)
-    except ValueError as exc:
-        abort(400, description=str(exc))
+        result = _safe_eval(expr)
+    except ValueError as e:
+        abort(400, description=str(e))
 
     return jsonify({"result": result})

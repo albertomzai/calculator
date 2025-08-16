@@ -1,46 +1,42 @@
-"""
+# backend/routes.py
 
-Blueprint definition for the calculator API.
-
-Provides a single endpoint `/api/calculate` that evaluates a mathematical
-expression sent in JSON format and returns the result.
-"""
-
-import re
+import ast
 from flask import Blueprint, request, jsonify, abort
 
-api_bp = Blueprint('api', __name__, url_prefix='/api')
+api_bp = Blueprint("api", __name__, url_prefix="/api")
 
-# Regular expression that only allows digits, operators, parentheses, decimal points and whitespace.
-_EXPRESSION_REGEX = re.compile(r'^[0-9+\-*/().\s]+$')
+def _safe_eval(expr: str):
+    """Evaluate a simple arithmetic expression safely using AST."""
+    try:
+        node = ast.parse(expr, mode='eval')
+    except SyntaxError as e:
+        raise ValueError("Invalid syntax") from e
 
-def _validate_expression(expr: str) -> None:
-    """Validate that the expression contains only allowed characters."""
-    if not expr or not _EXPRESSION_REGEX.match(expr):
-        raise ValueError('Invalid expression')
+    allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num, ast.Constant,)
+    for n in ast.walk(node):
+        if not isinstance(n, allowed_nodes) and not isinstance(n, (ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Pow, ast.USub, ast.UAdd, ast.Mod, ast.FloorDiv)):
+            raise ValueError("Unsupported expression")
+
+    try:
+        return eval(compile(node, '<string>', mode='eval'))
+    except Exception as e:
+        raise ValueError("Evaluation error") from e
 
 @api_bp.route('/calculate', methods=['POST'])
 def calculate():
-    """Evaluate a mathematical expression sent in JSON.
-
-    Expected payload:
-        {"expression": "5*8-3"}
-
-    Returns:
-        {"result": 37} on success,
-        HTTP 400 with error message on failure.
-"""
+    """Endpoint that receives a JSON payload with an 'expression' key and returns the evaluated result."""
     if not request.is_json:
-        abort(400, description='Request must be JSON')
+        abort(400, description="Request must be in JSON format")
 
     data = request.get_json()
-    expression = data.get('expression', '')
+    expression = data.get('expression')
+
+    if not isinstance(expression, str) or not expression.strip():
+        abort(400, description="'expression' must be a non-empty string")
 
     try:
-        _validate_expression(expression)
-        # Safe eval: only arithmetic operators are allowed.
-        result = eval(expression, {"__builtins__": None}, {})
-    except Exception as exc:
-        abort(400, description=str(exc))
+        result = _safe_eval(expression)
+    except ValueError as e:
+        abort(400, description=str(e))
 
-    return jsonify({"result": result})
+    return jsonify({'result': result})

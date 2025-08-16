@@ -1,3 +1,1 @@
-# Dependencies for the backend
-
 Flask

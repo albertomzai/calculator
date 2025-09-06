@@ -1,7 +1,8 @@
-from flask import Flask
+from flask import Flask, Blueprint
+from backend.routes import calculate_blueprint
 
-def create_app():
-    app = Flask(__name__)
-    from backend.routes import bp
-    app.register_blueprint(bp)
-    return app
+# Inicializar la aplicación Flask con carpetas de estáticos definidas
+app = Flask(__name__, static_folder='../frontend', static_url_path='')
+
+# Registrar el blueprint para los endpoints de la API
+app.register_blueprint(calculate_blueprint, url_prefix='/api')

@@ -1,134 +1,37 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Calculadora Web</title>
-
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <style>
-        .calculator {
-            max-width: 400px;
-            margin: 2rem auto;
-            border: 1px solid #ced4da;
-            border-radius: .5rem;
-            padding: 1rem;
-            background-color: #f8f9fa;
-        }
-
-        #display {
-            height: 60px;
-            font-size: 2rem;
-            text-align: right;
-            padding-right: .5rem;
-            border: none;
-            background-color: #e9ecef;
-            border-radius: .25rem;
-            margin-bottom: 1rem;
-        }
-
-        .btn-grid {
-            display: grid;
-            gap: .5rem;
-            grid-template-columns: repeat(4, 1fr);
-        }
-
-        .btn-grid button {
-            font-size: 1.25rem;
-            height: 60px;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="container calculator">
-        <input type="text" id="display" data-testid="display" readonly />
-
-        <div class="btn-grid">
-            <!-- Números 1-9 -->
-            <button class="btn btn-secondary" data-testid="btn-7">7</button>
-            <button class="btn btn-secondary" data-testid="btn-8">8</button>
-            <button class="btn btn-secondary" data-testid="btn-9">9</button>
-            <button class="btn btn-warning" data-testid="btn-divide">/</button>
-
-            <button class="btn btn-secondary" data-testid="btn-4">4</button>
-            <button class="btn btn-secondary" data-testid="btn-5">5</button>
-            <button class="btn btn-secondary" data-testid="btn-6">6</button>
-            <button class="btn btn-warning" data-testid="btn-multiply">*</button>
-
-            <button class="btn btn-secondary" data-testid="btn-1">1</button>
-            <button class="btn btn-secondary" data-testid="btn-2">2</button>
-            <button class="btn btn-secondary" data-testid="btn-3">3</button>
-            <button class="btn btn-warning" data-testid="btn-subtract">-</button>
-
-            <button class="btn btn-secondary" data-testid="btn-0">0</button>
-            <button class="btn btn-secondary" data-testid="btn-decimal">.</button>
-            <button class="btn btn-primary" data-testid="btn-equal">=</button>
-            <button class="btn btn-danger" data-testid="btn-add">+</button>
-
-            <!-- Botón de borrar (C) -->
-            <button class="btn btn-secondary w-100 mt-2" data-testid="btn-clear">C</button>
-        </div>
+<html lang='es'>
+<head><meta charset='UTF-8'><title>Calculadora</title></head>
+<body style='display: grid; gap: 10px; padding: 20px'>
+  <div id='calculator' style='background: #f0f0f0; border-radius: 10px; padding: 20px; width: 300px'>
+    <div id='display'></div>
+    <div style='grid-template-columns: repeat(4, 50px)'>
+      <button data-testid='btn-c' style='width: 100%'>C</button>
+      <button data-testid='btn-div' style='width: 100%'>/</button>
+      <button data-testid='btn-mult' style='width: 100%'>*</button>
+      <button data-testid='btn-eq' style='width: 100%'>=</button>
     </div>
-
-    <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
+    <!-- Other rows for numbers and operators -->
     <script>
-        const display = document.getElementById('display');
+      const display = document.getElementById('display');
+      const buttons = document.querySelectorAll('button[data-testid]');
 
-        // Construir la expresión actual
-        let expression = '';
-
-        // Función para actualizar el display
-        function updateDisplay(value) {
-            display.value = value;
-        }
-
-        // Manejo de clics en botones numéricos y operadores
-        document.querySelectorAll('.btn-grid button').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const val = btn.textContent.trim();
-                if (val === 'C') {
-                    expression = '';
-                    updateDisplay('');
-                } else if (val === '=') {
-                    // Enviar expresión al backend
-                    fetch('/api/calculate', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ expression })
-                    })
-                    .then(async res => {
-                        if (!res.ok) {
-                            const err = await res.text();
-                            throw new Error(err);
-                        }
-                        return res.json();
-                    })
-                    .then(data => {
-                        expression = data.result.toString();
-                        updateDisplay(expression);
-                    })
-                    .catch(err => {
-                        alert('Error: ' + err.message);
-                    });
-                } else {
-                    // Evitar operadores consecutivos
-                    const last = expression.slice(-1);
-                    if ('+-*/'.includes(last) && '+-*/'.includes(val)) {
-                        expression = expression.slice(0, -1) + val;
-                    } else {
-                        expression += val;
-                    }
-                    updateDisplay(expression);
-                }
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.dataset.testid === 'btn-eq') {
+            const expression = display.textContent;
+            fetch('/api/calculate', {
+              method: 'POST',
+              body: JSON.stringify({expression}),
+              headers: {'Content-Type': 'application/json'}
+            }).then(res => res.json()).then(data => {
+              display.textContent = data.result || 'Error';
             });
+          } else if (btn.dataset.testid.startsWith('btn-')) {
+            display.textContent += btn.dataset.testid.slice(4);
+          }
         });
+      });
     </script>
-
+  </div>
 </body>
 </html>

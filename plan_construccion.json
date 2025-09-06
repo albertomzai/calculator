@@ -1,0 +1,55 @@
+{
+  "api_contract": {
+    "ruta": "/api/calculate",
+    "metodo": "POST",
+    "descripcion": "Endpoint para evaluar expresiones matemáticas seguras.",
+    "parametros_entrada": {
+      "expresion": "string"
+    },
+    "respuesta_esperada": {
+      "resultado": "float",
+      "error": "string"
+    }
+  },
+  "contrato_qa_e2e": {
+    "pantalla_display": "display",
+    "boton_numero_{0-9}": "[id~=btn-{0-9}]",
+    "boton_operador_{+,-,*-/}": "[data-operador='{+}', '[data-operador='{-}', '[data-operador='*']', '[data-operador='/']]",
+    "boton_limpiar": "btn-clear",
+    "boton_decimal": "btn-decimal",
+    "boton_calcular": "btn-equals"
+  },
+  "plan": [
+    {
+      "etapa": "backend",
+      "tareas": [
+        "Crear estructura de directorios básica con carpetas 'backend' y 'frontend'.",
+        "Generar archivo `requirements.txt` con dependencias: 'Flask==2.3.2', 'pytest==7.4.0'.",
+        "Implementar archivo `pytest.ini` con '[pytest]\\npythonpath = backend' para pruebas.",
+        "Desarrollar paquete Flask en `backend/`: crear `__init__.py` con función `create_app()` que inicialice la app.",
+        "Configurar en `backend/__init__.py` el endpoint `/api/calculate` usando Blueprint de Flask.",
+        "Implementar lógica segura para evaluar expresiones matemáticas en `backend/routes.py`, validando entrada y manejando errores (división por cero, sintaxis inválida).",
+        "Devolver respuestas en formato JSON desde el endpoint con clave 'resultado' o 'error'.",
+        "Crear archivo `app.py` en raíz que importe e inicie la app Flask mediante `create_app()`.",
+        "Generar pruebas unitarias en `tests/test_backend.py` usando `pytest` para validar el endpoint `/api/calculate`."
+      ]
+    },
+    {
+      "etapa": "frontend",
+      "tareas": [
+        "Crear archivo `frontend/index.html` con estructura de calculadora: pantalla de entrada (id='display'), teclado con botones numéricos y operadores.",
+        "Incluir JavaScript inline para manejar eventos de clics en botones, construyendo la expresión matemática en el campo 'display'.",
+        "Implementar lógica AJAX con `fetch` para enviar la expresión completa al endpoint `/api/calculate` al presionar '='.",
+        "Mostrar dinámicamente el resultado recibido del backend en la pantalla o mensajes de error.",
+        "Asegurar manejo de errores en cliente: mostrar notificaciones si el servidor responde con 'error'."
+      ]
+    },
+    {
+      "etapa": "e2e",
+      "tareas": [
+        "Configurar pruebas E2E en Cypress: crear archivo `cypress/e2e/test.cy.js` que simule operar la calculadora (ej: '5+3=', '10/2=').",
+        "Definir acciones para verificar que el resultado correcto se muestre en la pantalla 'display' después de cada cálculo."
+      ]
+    }
+  ]
+}

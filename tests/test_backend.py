@@ -1,5 +1,6 @@
-import pytest
+"""Tests for the calculator backend API."""
 
+import json
 from backend import create_app
 
 @pytest.fixture
@@ -9,14 +10,15 @@ def client():
         yield client
 
 def test_calculate_success(client):
-    response = client.post('/api/calculate', json={'expression': '5*8-3'})
+    payload = {"expression": "5*8-3"}
+    response = client.post("/api/calculate", json=payload)
     assert response.status_code == 200
-    data = response.get_json()
-    assert 'result' in data
-    assert data['result'] == 37
+    data = json.loads(response.data)
+    assert data["result"] == 37
 
 def test_calculate_invalid(client):
-    response = client.post('/api/calculate', json={'expression': '5*/3'})
+    payload = {"expression": "5*/8"}
+    response = client.post("/api/calculate", json=payload)
     assert response.status_code == 400
-    data = response.get_json()
-    assert 'error' in data
+    data = json.loads(response.data)
+    assert "error" in data

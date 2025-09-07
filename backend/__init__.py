@@ -1,23 +1,18 @@
-"""Flask application factory for the calculator backend."""
+"""Package init for backend."""
 
-from flask import Flask, send_from_directory
+from flask import Flask
 
-__all__ = ["create_app"]
+def create_app():
+    """Factory que crea y configura la aplicación Flask."""
+    app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
-def create_app() -> Flask:
-    """Create and configure a new Flask application instance.
+    # Registrar blueprints
+    from .routes import api_bp
+    app.register_blueprint(api_bp, url_prefix='/api')
 
-    Returns:
-        Flask: Configured Flask app.
-    """
-    app = Flask(__name__, static_folder="../frontend", static_url_path="")
-
-    # Register blueprints
-    from . import routes  # noqa: F401
-
-    @app.route("/")
-    def serve_index():
-        """Serve the main frontend page."""
-        return send_from_directory(app.static_folder, "index.html")
+    @app.route('/')
+    def index():
+        """Devuelve el archivo index.html del frontend."""
+        return app.send_static_file('index.html')
 
     return app

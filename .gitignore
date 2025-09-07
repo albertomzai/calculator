@@ -1,29 +1,10 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Virtual environment
+# Entorno virtual
 venv/
+__pycache__/
+*.pyc
 env/
-.venv/
+.env
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-_version.py
-
-# PyInstaller
-target/
+# Archivos generados
+*.log
+*.tmp

@@ -1,0 +1,7 @@
+# Entornos virtuales
+venv/
+__pycache__/
+*.pyc
+
+# Node modules (si se usan)
+node_modules/

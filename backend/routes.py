@@ -1,57 +1,60 @@
-"""Blueprint que contiene las rutas de la API."""
+"""Blueprint containing the API endpoints for calculation."""
 
-from flask import Blueprint, request, jsonify
 import ast
+from flask import Blueprint, request, jsonify, abort
 
-api_bp = Blueprint('api', __name__)
+__all__ = ["bp"]
 
-def _evaluate_expression(expr: str):
-    """Evalúa una expresión aritmética segura usando el módulo ast."""
+bp = Blueprint('api', __name__, url_prefix='/api')
+
+def _safe_eval(expr: str):
+    """Evaluate a mathematical expression safely.
+
+    Only allows numbers and the operators +, -, *, /, **, //, % and parentheses.
+    Args:
+        expr (str): The expression to evaluate.
+    Returns:
+        float or int: The result of the evaluation.
+    Raises:
+        ValueError: If the expression contains disallowed nodes.
+    """
     try:
         node = ast.parse(expr, mode='eval')
     except SyntaxError as e:
-        raise ValueError('Expresión inválida') from e
+        raise ValueError("Invalid syntax") from e
 
-    def _visit(node):
-        if isinstance(node, ast.Expression):
-            return _visit(node.body)
-        elif isinstance(node, ast.BinOp):
-            left = _visit(node.left)
-            right = _visit(node.right)
-            if isinstance(node.op, ast.Add):
-                return left + right
-            elif isinstance(node.op, ast.Sub):
-                return left - right
-            elif isinstance(node.op, ast.Mult):
-                return left * right
-            elif isinstance(node.op, ast.Div):
-                return left / right
-            else:
-                raise ValueError('Operador no permitido')
-        elif isinstance(node, ast.Num):  # Python <3.8
-            return node.n
-        elif isinstance(node, ast.Constant):  # Python >=3.8
-            if isinstance(node.value, (int, float)):
-                return node.value
-            else:
-                raise ValueError('Tipo no permitido')
-        else:
-            raise ValueError('Nodo no permitido')
+    allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num, ast.Constant, ast.operator, ast.unaryop)
+    for subnode in ast.walk(node):
+        if not isinstance(subnode, allowed_nodes):
+            raise ValueError("Disallowed expression")
 
-    return _visit(node)
+    # Use eval with empty globals and locals to prevent access to builtins
+    try:
+        result = eval(compile(node, '<string>', 'eval'), {}, {})
+    except Exception as e:
+        raise ValueError("Evaluation error") from e
 
-@api_bp.route('/calculate', methods=['POST'])
+    return result
+
+@bp.route('/calculate', methods=['POST'])
 def calculate():
-    """Endpoint que recibe una expresión y devuelve el resultado."""
-    data = request.get_json(silent=True) or {}
-    expr = data.get('expression')
+    """Endpoint to evaluate a mathematical expression.
 
-    if not expr:
-        return jsonify({'error': 'No se proporcionó expresión'}), 400
+    Expects JSON payload: {"expression": "5*8-3"}
+    Returns:
+        JSON: {"result": 37}
+    """
+    if not request.is_json:
+        abort(400, description="Request must be JSON")
+
+    data = request.get_json()
+    expression = data.get('expression')
+    if not isinstance(expression, str):
+        abort(400, description="'expression' must be a string")
 
     try:
-        result = _evaluate_expression(expr)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        result = _safe_eval(expression)
+    except ValueError as e:
+        abort(400, description=str(e))
 
-    return jsonify({'result': result})
+    return jsonify({"result": result})

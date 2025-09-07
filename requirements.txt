@@ -1,4 +1,3 @@
-# Dependencias del proyecto
-
-Flask
-pytest
+# Dependencies for the calculator project
+Flask==3.0.2
+pytest==7.4.3

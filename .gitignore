@@ -1,7 +1,9 @@
-# Entornos virtuales
-venv/
+# Python virtual environment
+.venv/
+# Flask instance folder
+instance/
+# Byte-compiled files
 __pycache__/
 *.pyc
-
-# Node modules (si se usan)
-node_modules/
+# Cypress cache
+.cypress/

@@ -1,37 +1,73 @@
 <!DOCTYPE html>
-<html lang='es'>
-<head><meta charset='UTF-8'><title>Calculadora</title></head>
-<body style='display: grid; gap: 10px; padding: 20px'>
-  <div id='calculator' style='background: #f0f0f0; border-radius: 10px; padding: 20px; width: 300px'>
-    <div id='display'></div>
-    <div style='grid-template-columns: repeat(4, 50px)'>
-      <button data-testid='btn-c' style='width: 100%'>C</button>
-      <button data-testid='btn-div' style='width: 100%'>/</button>
-      <button data-testid='btn-mult' style='width: 100%'>*</button>
-      <button data-testid='btn-eq' style='width: 100%'>=</button>
-    </div>
-    <!-- Other rows for numbers and operators -->
-    <script>
-      const display = document.getElementById('display');
-      const buttons = document.querySelectorAll('button[data-testid]');
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculadora</title>
+  <style>
+    body { display: flex; justify-content: center; align-items: center; height: 100vh; font-family: Arial, sans-serif; }
+    .calculator { width: 260px; border: 1px solid #333; padding: 10px; border-radius: 5px; background: #f9f9f9; }
+    .screen { height: 40px; margin-bottom: 10px; font-size: 1.2rem; text-align: right; padding: 5px; border: 1px solid #ccc; border-radius: 3px; background: #fff; }
+    .buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+    button { font-size: 1rem; padding: 10px; }
+  </style>
+</head>
+<body>
+<div class="calculator">
+  <div id="screen" class="screen" data-testid="screen-input"></div>
+  <div class="buttons">
+    <!-- Numerics -->
+    <button data-testid="btn-7">7</button>
+    <button data-testid="btn-8">8</button>
+    <button data-testid="btn-9">9</button>
+    <button data-testid="btn-div">/</button>
 
-      buttons.forEach(btn => {
-        btn.addEventListener('click', () => {
-          if (btn.dataset.testid === 'btn-eq') {
-            const expression = display.textContent;
-            fetch('/api/calculate', {
-              method: 'POST',
-              body: JSON.stringify({expression}),
-              headers: {'Content-Type': 'application/json'}
-            }).then(res => res.json()).then(data => {
-              display.textContent = data.result || 'Error';
-            });
-          } else if (btn.dataset.testid.startsWith('btn-')) {
-            display.textContent += btn.dataset.testid.slice(4);
-          }
-        });
-      });
-    </script>
+    <button data-testid="btn-4">4</button>
+    <button data-testid="btn-5">5</button>
+    <button data-testid="btn-6">6</button>
+    <button data-testid="btn-mul">*</button>
+
+    <button data-testid="btn-1">1</button>
+    <button data-testid="btn-2">2</button>
+    <button data-testid="btn-3">3</button>
+    <button data-testid="btn-minus">-</button>
+
+    <button data-testid="btn-dot">.</button>
+    <button data-testid="btn-0">0</button>
+    <button data-testid="btn-equals">=</button>
+    <button data-testid="btn-plus">+</button>
+
+    <button data-testid="btn-clear" style="grid-column: span 4; background: #e74c3c; color: #fff;">C</button>
   </div>
+  <div id="result" class="screen" data-testid="screen-result"></div>
+</div>
+<script>
+  const screen = document.getElementById('screen');
+  const resultScreen = document.getElementById('result');
+  let expression = '';
+
+  function updateScreen(value) {
+    screen.textContent = value;
+  }
+
+  document.querySelectorAll('.buttons button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const val = btn.textContent;
+      if (val === 'C') { expression = ''; updateScreen(''); resultScreen.textContent = ''; return; }
+      if (val === '=') {
+        fetch('/api/calculate', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({expression})
+        })
+        .then(res => res.json())
+        .then(data => { resultScreen.textContent = data.result !== undefined ? data.result : data.error; })
+        .catch(err => { resultScreen.textContent = 'Error'; });
+        return;
+      }
+      expression += val;
+      updateScreen(expression);
+    });
+  });
+</script>
 </body>
 </html>

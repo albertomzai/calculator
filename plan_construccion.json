@@ -2,7 +2,7 @@
   "api_contract": {
     "ruta": "/api/calculate",
     "metodo": "POST",
-    "descripcion": "Endpoint para evaluar una expresión matemática segura.",
+    "descripcion": "Evalúa una expresión matemática recibida como cadena y devuelve el resultado.",
     "parametros_entrada": {
       "expression": "string"
     },
@@ -11,7 +11,7 @@
     }
   },
   "contrato_qa_e2e": {
-    "pantalla_display": "display",
+    "pantalla_input": "display",
     "boton_numero_0": "btn-0",
     "boton_numero_1": "btn-1",
     "boton_numero_2": "btn-2",
@@ -23,8 +23,8 @@
     "boton_numero_8": "btn-8",
     "boton_numero_9": "btn-9",
     "boton_decimal": "btn-decimal",
-    "boton_suma": "btn-plus",
-    "boton_resta": "btn-minus",
+    "boton_suma": "btn-add",
+    "boton_resta": "btn-subtract",
     "boton_multiplicacion": "btn-multiply",
     "boton_division": "btn-divide",
     "boton_igual": "btn-equals",
@@ -34,35 +34,32 @@
     {
       "etapa": "backend",
       "tareas": [
-        "Crear el fichero `requirements.txt` con la dependencia 'Flask'.",
-        "Crear el fichero `pytest.ini` en la raíz con contenido '[pytest]\\npythonpath = .'",
-        "Crear la carpeta `backend/` y dentro un archivo `__init__.py` que defina una factory `create_app`. ",
-        "En `backend/__init__.py`, inicializar una instancia de Flask, configurar CORS si es necesario y registrar el blueprint.",
-        "Crear en `backend/routes.py` un Blueprint llamado `api_bp` con el endpoint POST '/api/calculate'.",
-        "Implementar la lógica del endpoint para recibir JSON con clave 'expression', evaluar la expresión de forma segura (por ejemplo, usando ast.parse y un nodo evaluador limitado), y devolver JSON con clave 'result'.",
-        "Añadir manejo de errores: si la expresión es inválida, retornar 400 con mensaje claro.",
-        "Crear `app.py` en raíz que importe `create_app` desde `backend` y ejecute la aplicación al correr el script.",
-        "Crear una carpeta `tests/` y dentro un archivo `test_backend.py` con pruebas unitarias para el endpoint usando el test client de Flask.",
-        "Crear `.gitignore` en raíz para ignorar .venv, __pycache__, etc."
+        "Crear el fichero requirements.txt con las dependencias Flask y pytest.",
+        "Crear el fichero pytest.ini en la raíz con la configuración básica.",
+        "Crear el paquete backend/ con un archivo __init__.py que defina la factory create_app.",
+        "En backend/__init__.py, configurar la aplicación Flask para servir archivos estáticos desde '../frontend'.",
+        "Dentro de backend/, crear routes.py y registrar un Blueprint llamado 'api' con el endpoint POST '/api/calculate'.",
+        "Implementar en routes.py la lógica que recibe JSON con clave 'expression', evalúa la expresión de forma segura y devuelve JSON con clave 'result'.",
+        "Crear el fichero app.py en la raíz que importe create_app del paquete backend y ejecute la aplicación.",
+        "Añadir un directorio tests/ con test_backend.py que utilice el test client de Flask para verificar la respuesta del endpoint /api/calculate. ",
+        "Agregar un .gitignore en la raíz para excluir entornos virtuales, __pycache__ y node_modules."
       ]
     },
     {
       "etapa": "frontend",
       "tareas": [
-        "Crear la carpeta `frontend/` y dentro un archivo único `index.html` con estructura básica de una calculadora.",
-        "En el HTML incluir un elemento de pantalla con id 'display' y los botones numerales, operadores, punto decimal, igual, borrar, cada uno con su atributo data-testid correspondiente al contrato e2e.",
-        "Incorporar CSS interno que utilice Grid o Flexbox para la disposición de la calculadora.",
-        "Añadir script JavaScript interno que capture clicks en los botones, construya la expresión matemática en el display y envíe mediante fetch a '/api/calculate' cuando se pulse '='.",
-        "Procesar la respuesta JSON del backend y mostrar el valor 'result' en el display.",
-        "Implementar manejo de errores mostrando un mensaje breve en el display si la API devuelve error."
+        "Crear el archivo frontend/index.html con una estructura de calculadora usando HTML5 y CSS Grid.",
+        "Incluir en index.html un elemento con id 'display' para mostrar la expresión y el resultado.",
+        "Añadir botones numericos 0-9, operadores + - * /, punto decimal, igual (=), borrar (C) con los data-testid correspondientes del contrato de pruebas.",
+        "Escribir JavaScript ES6 dentro de index.html que capture clics en los botones, construya la expresión y actualice el display.",
+        "Implementar la función que envía una petición POST a '/api/calculate' cuando se pulsa '=' y muestra el resultado devuelto."
       ]
     },
     {
       "etapa": "e2e",
       "tareas": [
-        "Crear carpeta `cypress/` con subcarpeta `e2e/` y dentro un archivo `calculator.cy.js`. ",
-        "En esa prueba, visitar la página raíz '/', ingresar una expresión (ej: '5+3*2'), pulsar '=', y verificar que el valor mostrado en el elemento con data-testid 'display' sea '11'.",
-        "Incluir pruebas adicionales para comprobar que los botones numerales y operadores actualizan correctamente el display y que el botón 'C' limpia la pantalla."
+        "Crear un archivo de prueba Cypress cypress/e2e/calculator.cy.js.",
+        "La prueba debe abrir la página index.html, simular una secuencia de pulsaciones (por ejemplo '5', '*', '8', '-', '3', '='), y verificar que el elemento con data-testid 'display' muestra el valor esperado '37'."
       ]
     }
   ]

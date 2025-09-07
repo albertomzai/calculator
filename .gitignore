@@ -3,11 +3,42 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Virtual environment
-venv/
-env/
-.env
+# C extensions
+*.so
 
-# IDE folders
+# Distribution / packaging
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+pip-wheel-metadata/
+
+# PyInstaller
+#  Usually these files are written by a python script from a template.
+dist/
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+cover/
+nosetests.xml
+coverage.xml
+*.cover
+*-cover.html
+
+# PyCharm
 .idea/
-.vscode/

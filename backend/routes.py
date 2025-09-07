@@ -1,55 +1,51 @@
-"""Blueprint containing API endpoints for the calculator."""
+"""Blueprint for calculator routes."""
 
 from flask import Blueprint, request, jsonify
 import ast
 
-__all__ = ["api_bp"]
+calculator_bp = Blueprint('calculator', __name__, url_prefix='/api')
 
-api_bp = Blueprint("api", __name__)
+# Allowed AST nodes for safe evaluation
+_ALLOWED_NODES = (
+    ast.Expression,
+    ast.BinOp,
+    ast.UnaryOp,
+    ast.Num,  # For Python <3.8
+    ast.Constant,  # For Python >=3.8
+    ast.Add,
+    ast.Sub,
+    ast.Mult,
+    ast.Div,
+    ast.Pow,
+    ast.USub,
+)
 
 def _safe_eval(expr: str):
-    """Safely evaluate a mathematical expression.
-
-    Supports +, -, *, / and parentheses. Raises ValueError if the
-    expression contains unsupported nodes or syntax errors.
-    """
+    """Evaluate a mathematical expression safely."""
     try:
-        node = ast.parse(expr, mode="eval")
+        node = ast.parse(expr, mode='eval')
     except SyntaxError as e:
-        raise ValueError("Invalid expression") from e
+        raise ValueError(f'Invalid expression: {expr}') from e
 
-    allowed_nodes = (ast.Expression, ast.BinOp, ast.UnaryOp, ast.Num,
-                    ast.Constant, ast.Add, ast.Sub, ast.Mult, ast.Div,
-                    ast.Pow, ast.USub, ast.UAdd, ast.Mod, ast.FloorDiv,
-                    ast.LShift, ast.RShift, ast.BitOr, ast.BitAnd, ast.BitXor)
+    for subnode in ast.walk(node):
+        if not isinstance(subnode, _ALLOWED_NODES):
+            raise ValueError('Disallowed expression')
 
-    for n in ast.walk(node):
-        if not isinstance(n, allowed_nodes):
-            raise ValueError("Unsupported expression")
+    # Compile and evaluate the node safely
+    code = compile(node, '<string>', 'eval')
+    return eval(code, {'__builtins__': {}})
 
-    # Evaluate the AST safely
-    try:
-        result = eval(compile(node, filename="<expr>", mode="eval"))
-    except Exception as e:
-        raise ValueError("Error evaluating expression") from e
-
-    return result
-
-@api_bp.route("/calculate", methods=["POST"])
+@calculator_bp.route('/calculate', methods=['POST'])
 def calculate():
-    """Endpoint that receives a mathematical expression and returns the result.
+    """Endpoint to evaluate a mathematical expression."""
+    data = request.get_json() or {}
+    expr = data.get('expression', '')
+    if not expr:
+        return jsonify({'error': 'No expression provided'}), 400
 
-    Expects JSON payload: {"expression": "5*8-3"}
-    Returns JSON: {"result": 37}
-    """
-    data = request.get_json(silent=True)
-    if not data or "expression" not in data:
-        return jsonify({"error": "Missing expression"}), 400
-
-    expr = str(data["expression"])
     try:
         result = _safe_eval(expr)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
-    return jsonify({"result": result})
+    return jsonify({'result': result})

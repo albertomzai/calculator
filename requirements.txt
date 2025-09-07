@@ -1,4 +1,2 @@
-# Requirements for the calculator backend
-
 Flask
 pytest

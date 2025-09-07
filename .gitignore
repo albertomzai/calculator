@@ -1,9 +1,13 @@
-# Python virtual environment
-.venv/
-# Flask instance folder
-instance/
-# Byte-compiled files
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
-# Cypress cache
-.cypress/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+env/
+.env
+
+# IDE folders
+.idea/
+.vscode/

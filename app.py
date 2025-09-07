@@ -1,4 +1,5 @@
-# app.py
+"""Entry point for running the Flask application."""
+
 from backend import create_app
 
 app = create_app()

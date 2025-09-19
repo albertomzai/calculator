@@ -1,4 +1,4 @@
-"""Punto de entrada para ejecutar la aplicación Flask."""
+"""Script de entrada para ejecutar la aplicación Flask."""
 
 from backend import create_app
 

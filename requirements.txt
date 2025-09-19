@@ -1,2 +1,4 @@
+# Requerimientos básicos para el proyecto
+
 Flask
 pytest

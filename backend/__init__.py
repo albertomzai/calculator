@@ -1,31 +1,24 @@
-"""Flask application factory for the calculator backend."""
+"""Módulo principal del backend.
 
-from flask import Flask, send_from_directory
+Este paquete contiene la fábrica de aplicación Flask que sirve tanto el frontend (ubicado en ``frontend``) como los endpoints API.
+"""
 
-__all__ = ["create_app", "app"]
+from flask import Flask
 
-def create_app():
-    """Create and configure a new Flask application instance.
+def create_app() -> Flask:
+    """Crea y configura la instancia de Flask.
 
-    Returns:
-        Flask: The configured Flask application.
+    Se establece la carpeta estática para servir el frontend y se registra el blueprint con las rutas de la API.
     """
     app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
-    # Register blueprints
-    from . import routes
-    app.register_blueprint(routes.bp)
+    # Importar y registrar los blueprints después de crear la app para evitar ciclos de importación
+    from .routes import api_bp
+    app.register_blueprint(api_bp)
 
     @app.route('/')
-    def serve_index():
-        """Serve the main frontend page.
-
-        Returns:
-            Response: The index.html file served as static content.
-        """
-        return send_from_directory(app.static_folder, 'index.html')
+    def index():
+        """Sirve el archivo ``index.html`` del frontend."""
+        return app.send_static_file('index.html')
 
     return app
-
-# Create a global app instance for testing and running directly.
-app = create_app()

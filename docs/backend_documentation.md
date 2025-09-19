@@ -1,65 +1,64 @@
 # Visión General del Proyecto
 
-El proyecto es una API web sencilla construida con **Flask** que expone un único endpoint `/api/calculate`. Su objetivo principal es recibir expresiones aritméticas en formato JSON, evaluarlas de manera segura y devolver el resultado. Además, la aplicación sirve una interfaz frontend estática (ubicada en la carpeta `frontend`) a través del mismo servidor Flask.
+El proyecto es una API sencilla construida con **Flask** que expone un único endpoint `/api/calculate`. Su objetivo principal es recibir expresiones matemáticas en formato JSON, evaluarlas de forma segura y devolver el resultado. La aplicación también sirve una interfaz web estática (ubicada en la carpeta `frontend`) a través del mismo servidor Flask.
 
-## Características principales
+- **Tecnologías principales**: Python 3, Flask 2.x.
+- **Dependencias**: `Flask==2.3.2`, `pytest==7.4.0`.
+- **Estructura de paquetes**:
+  - `app.py`: punto de entrada para ejecutar la aplicación en modo desarrollo.
+  - `__init__.py`: crea y configura la instancia Flask, registra blueprints y rutas estáticas.
+  - `routes.py`: contiene el blueprint con la lógica del endpoint `/calculate`.
+  - `requirements.txt`: lista las dependencias.
 
-- **Evaluación segura**: Se emplea el módulo `ast` para parsear la expresión y se restringe estrictamente a los operadores binarios básicos (`+`, `-`, `*`, `/`). Cualquier otro nodo produce un error.
-- **API RESTful mínima**: Un solo endpoint POST que devuelve JSON con el resultado o un mensaje de error descriptivo.
-- **Frontend estático**: El servidor Flask sirve archivos estáticos, facilitando la integración con cualquier SPA ligera sin necesidad de un servidor separado.
+El flujo de trabajo típico es:
+1. El cliente envía una petición POST a `/api/calculate` con un JSON que incluye `"expression"`.
+2. Flask procesa la solicitud, valida y evalúa la expresión.
+3. Se devuelve un JSON con el resultado o un mensaje de error.
 
 ---
 
 # Arquitectura del Sistema
 
-El proyecto sigue una arquitectura monolítica ligera basada en Flask. La estructura de paquetes es la siguiente:
+La arquitectura sigue un patrón **MVC ligero**:
 
-```
-project/
-│
-├── app.py                # Punto de entrada para ejecutar la aplicación
-├── __init__.py           # Fábrica de la aplicación y configuración
-├── routes.py             # Blueprint con las rutas API
-└── requirements.txt      # Dependencias del proyecto
-```
+| Componente | Responsabilidad |
+|------------|-----------------|
+| `app.py`   | Punto de entrada; arranca el servidor Flask. |
+| `__init__.py` | Configuración de la aplicación y registro de blueprints. |
+| `routes.py` | Lógica del endpoint `/calculate`; incluye validación y evaluación segura. |
+| Frontend (static) | Página HTML que consume la API (no incluido en el código fuente). |
 
-## Diagrama Mermaid
-
-```mermaid
-flowchart TD
-    A[app.py] --> B{create_app}
-    B --> C[Flask App]
-    C --> D[api_bp (routes.py)]
-    C --> E[/] -> F[frontend/index.html]
-    D --> G[/api/calculate] --> H[POST JSON] --> I[_safe_eval] --> J[result]
-```
+El servidor Flask actúa como **gateway** entre el cliente HTTP y la lógica de negocio, manteniendo una separación clara entre la capa de presentación (frontend estático) y la capa de servicio (API).
 
 ---
 
 # Endpoints de la API
 
-| Método | Ruta            | Parámetros de Entrada          | Respuesta Exitosa | Código de Estado | Descripción |
-|--------|-----------------|--------------------------------|-------------------|------------------|-------------|
-| POST   | `/api/calculate` | `{"expression": "<string>"}`  | `{"result": <number>}` | 200 OK | Evalúa la expresión aritmética y devuelve el resultado. |
-|        |                 |                                | `{"message": "error"}` | 400 Bad Request | Si falta el campo o la expresión es inválida, se devuelve un mensaje de error descriptivo. |
+## `/api/calculate` – POST
 
-### Ejemplo de solicitud
+| Atributo | Tipo | Descripción |
+|----------|------|-------------|
+| `expression` | string | Expresión matemática que se evaluará. Debe contener solo operadores aritméticos básicos (`+`, `-`, `*`, `/`) y paréntesis. |
 
-```http
-POST /api/calculate HTTP/1.1
-Content-Type: application/json
+### Respuestas
 
-{
-  "expression": "3 + 4 * (2 - 1)"
-}
+| Código | Cuerpo | Descripción |
+|--------|--------|-------------|
+| 200 OK | `{ "result": <number> }` | Resultado de la evaluación. |
+| 400 Bad Request | `{ "error": "<mensaje>" }` | Expresión inválida o error durante la evaluación. |
+
+### Ejemplo
+
+```bash
+curl -X POST http://localhost:5000/api/calculate \
+     -H 'Content-Type: application/json' \
+     -d '{"expression":"(2+3)*4"}'
 ```
 
-### Ejemplo de respuesta
+Respuesta:
 
 ```json
-{
-  "result": 7
-}
+{ "result": 20 }
 ```
 
 ---
@@ -69,7 +68,7 @@ Content-Type: application/json
 1. **Clonar el repositorio**  
    ```bash
    git clone <URL_DEL_REPOSITORIO>
-   cd <nombre_del_directorio>
+   cd <nombre_del_repositorio>
    ```
 
 2. **Crear un entorno virtual (opcional pero recomendado)**  
@@ -87,35 +86,53 @@ Content-Type: application/json
    ```bash
    python app.py
    ```
-   La API estará disponible en `http://0.0.0.0:5000/api/calculate` y el frontend en `http://0.0.0.0:5000/`.
+   La API estará disponible en `http://0.0.0.0:5000/`.
 
-5. **Ejecutar pruebas (si se incluyen)**  
+5. **Probar el endpoint (ejemplo con curl)**  
    ```bash
-   pytest
+   curl -X POST http://localhost:5000/api/calculate \
+        -H 'Content-Type: application/json' \
+        -d '{"expression":"10/(2+3)"}'
    ```
 
 ---
 
 # Flujo de Datos Clave
 
-1. **Cliente** envía una petición POST a `/api/calculate` con un cuerpo JSON que contiene el campo `expression`.
-2. Flask recibe la solicitud y dirige la ruta al blueprint `api_bp`.
-3. La función `_safe_eval` procesa la expresión:
-   - Se parsea usando `ast.parse`.
-   - Un visitante de AST valida cada nodo (solo permite binarios básicos y números).
-   - Si la validación pasa, se compila y evalúa con un entorno restringido (`__builtins__` deshabilitado).
-4. El resultado numérico es empaquetado en JSON y devuelto al cliente.
-5. En caso de error (syntax, operador no permitido, valor no numérico), Flask responde con `400 Bad Request` y un mensaje descriptivo.
+```mermaid
+sequenceDiagram
+    participant C as Cliente
+    participant S as Flask Server
+    participant R as routes._eval_expr
+
+    C->>S: POST /api/calculate { "expression": "..."}
+    alt expresión válida
+        S->>R: _eval_expr(expression)
+        R-->>S: result
+        S->>C: 200 { "result": result }
+    else error
+        S->>C: 400 { "error": mensaje }
+    end
+```
+
+1. **Cliente** envía la expresión.
+2. Flask recibe la solicitud y extrae el JSON.
+3. Se llama a `_eval_expr`, que:
+   - Analiza el AST de la expresión.
+   - Verifica que solo contenga nodos permitidos.
+   - Evalúa de forma segura sin `__builtins__`.
+4. El resultado (o error) se devuelve al cliente en formato JSON.
 
 ---
 
 # Extensiones Futuras
 
-| Área | Posible Mejora | Beneficio |
-|------|----------------|-----------|
-| **Seguridad** | Añadir autenticación JWT para proteger el endpoint. | Evita uso indebido de la API. |
-| **Validaciones** | Soportar funciones matemáticas (`sqrt`, `pow`) con un whitelist controlado. | Ampliar funcionalidad sin comprometer seguridad. |
-| **Documentación** | Generar OpenAPI/Swagger automáticamente usando Flask-RESTX o similar. | Facilita consumo por terceros y pruebas automáticas. |
-| **Testing** | Implementar pruebas unitarias para `_safe_eval` con casos de borde (p.ej., división por cero). | Garantiza estabilidad ante cambios futuros. |
+| Área | Posible Mejora |
+|------|----------------|
+| **Seguridad** | Implementar un *sandbox* más robusto o usar una librería especializada como `asteval` para evitar vulnerabilidades. |
+| **Soporte de funciones** | Añadir funciones matemáticas (`sin`, `cos`, `sqrt`) con validación explícita. |
+| **Persistencia** | Guardar historial de cálculos en una base de datos (SQLite) y exponer endpoints CRUD. |
+| **Documentación automática** | Integrar Swagger/OpenAPI mediante `flask-restx` para generar documentación interactiva. |
+| **Pruebas** | Ampliar el conjunto de pruebas unitarias con `pytest` y cubrir casos edge. |
 
 ---

@@ -1,24 +1,18 @@
-"""Módulo principal del backend.
-
-Este paquete contiene la fábrica de aplicación Flask que sirve tanto el frontend (ubicado en ``frontend``) como los endpoints API.
-"""
+"""Backend package initialization."""
 
 from flask import Flask
 
-def create_app() -> Flask:
-    """Crea y configura la instancia de Flask.
-
-    Se establece la carpeta estática para servir el frontend y se registra el blueprint con las rutas de la API.
-    """
+def create_app():
+    """Create and configure the Flask application."""
     app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
-    # Importar y registrar los blueprints después de crear la app para evitar ciclos de importación
+    # Register blueprints
     from .routes import api_bp
-    app.register_blueprint(api_bp)
+    app.register_blueprint(api_bp, url_prefix='/api')
 
     @app.route('/')
     def index():
-        """Sirve el archivo ``index.html`` del frontend."""
+        """Serve the frontend index.html."""
         return app.send_static_file('index.html')
 
     return app
